@@ -1,38 +1,104 @@
-.register-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-  }
-  
-  .register-form {
-    width: 320px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    text-align: center;
-  }
-  
-  .register-form input {
-    padding: 8px;
-    font-size: 14px;
-  }
-  
-  .register-form button {
-    background-color: #0095f6;
-    color: white;
-    padding: 8px;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-  }
-  
-  .logo {
-    font-family: 'Cursive', sans-serif;
-    font-size: 28px;
-  }
-  
-  .error {
-    color: red;
-    font-size: 12px;
-  }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: #fafafa;
+}
+
+.register-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.register-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.register-form {
+  width: 350px;
+  border: 1px solid #dbdbdb;
+  padding: 40px 40px 20px;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+
+.register-logo {
+  width: 175px;
+  margin: 0 auto 10px;
+}
+
+.register-subtitle {
+  color: #737373;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 15px;
+}
+
+.register-form input {
+  height: 36px;
+  padding: 8px;
+  border: 1px solid #dbdbdb;
+  border-radius: 3px;
+  font-size: 12px;
+  background: #fafafa;
+}
+
+.register-btn {
+  background-color: #0095f6;
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.register-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.register-error {
+  color: red;
+  font-size: 12px;
+}
+
+.register-info {
+  font-size: 12px;
+  color: #737373;
+  margin-top: 5px;
+}
+
+.register-info span {
+  color: #00376b;
+  cursor: pointer;
+}
+
+.register-footer {
+  border: 1px solid #dbdbdb;
+  background-color: white;
+  width: 100%;
+  padding: 20px 40px;
+  margin-top: 10px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.register-footer a {
+  color: #0095f6;
+  text-decoration: none;
+  font-weight: 500;
+}
