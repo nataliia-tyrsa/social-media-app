@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "@/services/auth";
 import styles from "./Login.module.css";
 
@@ -10,11 +10,13 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     const result = await loginUser({ email, password });
 
@@ -23,6 +25,8 @@ export default function Login() {
     } else {
       setError(result.message || "Ошибка входа");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -38,9 +42,12 @@ export default function Login() {
           <form onSubmit={handleSubmit} className={styles.form}>
             <input
               type="email"
-              placeholder="Username, or email"
+              placeholder="Username or email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError(""); // сбрасываем ошибку при вводе
+              }}
               required
             />
 
@@ -48,24 +55,31 @@ export default function Login() {
               type="password"
               placeholder="Password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError(""); // сбрасываем ошибку при вводе
+              }}
               required
             />
 
             {error && <p className={styles.error}>{error}</p>}
 
-            <button type="submit">Log in</button>
+            <button type="submit" disabled={loading}>
+              {loading ? "Logging in..." : "Log in"}
+            </button>
           </form>
 
           <div className={styles.separator}>OR</div>
 
-          <button type="button" className={styles.forgot}>Forgot password?</button>
+          <Link to="/reset" className={styles.forgot}>
+            Forgot password?
+          </Link>
         </div>
 
         <div className={styles.signupBox}>
           <p>
             Don't have an account?{" "}
-            <button type="button" className={styles.signup}>Sign up</button>
+            <Link to="/signup" className={styles.signup}>Sign up</Link>
           </p>
         </div>
       </div>

@@ -1,0 +1,38 @@
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  
+  .register-form {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .register-form input {
+    padding: 8px;
+    font-size: 14px;
+  }
+  
+  .register-form button {
+    background-color: #0095f6;
+    color: white;
+    padding: 8px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .logo {
+    font-family: 'Cursive', sans-serif;
+    font-size: 28px;
+  }
+  
+  .error {
+    color: red;
+    font-size: 12px;
+  }
