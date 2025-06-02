@@ -13,7 +13,8 @@ const ResetPassword = () => {
 
   return (
     <div className="reset-wrapper">
-      <form className="reset-form" onSubmit={handleSubmit}>
+     <div className="reset">
+     <form className="reset-form" onSubmit={handleSubmit}>
         <img className="reset-lock-icon" src={lock} alt="lock" />
         <h2 className="reset-title">Trouble logging in?</h2>
         <p className="reset-description">
@@ -44,11 +45,11 @@ const ResetPassword = () => {
           Create new account
         </Link>
 
-        <div className="reset-bottom-bar">
+      </form>
+      <div className="reset-bottom-bar">
         <Link to="/">Back to login</Link>
       </div>
-      </form>
-
+     </div>
       
     </div>
   );
