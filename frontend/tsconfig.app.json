@@ -20,6 +20,7 @@
     "jsx": "react-jsx",
 
     /* Linting */
+    "esModuleInterop": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import "./ResetPassword.css";
+import styles from "./ResetPassword.module.css";
 import lock from "../../assets/lock.svg";
 
 const ResetPassword = () => {
@@ -12,45 +12,44 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="reset-wrapper">
-     <div className="reset">
-     <form className="reset-form" onSubmit={handleSubmit}>
-        <img className="reset-lock-icon" src={lock} alt="lock" />
-        <h2 className="reset-title">Trouble logging in?</h2>
-        <p className="reset-description">
-          Enter your email, phone, or username and we'll send you a link to get
-          back into your account.
-        </p>
+    <div className={styles.resetWrapper}>
+      <div className={styles.reset}>
+        <form className={styles.resetForm} onSubmit={handleSubmit}>
+          <img className={styles.resetLockIcon} src={lock} alt="lock" />
+          <h2 className={styles.resetTitle}>Trouble logging in?</h2>
+          <p className={styles.resetDescription}>
+            Enter your email, phone, or username and we'll send you a link to get
+            back into your account.
+          </p>
 
-        <input
-          className="reset-input"
-          type="text"
-          placeholder="Email or Username"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          required
-        />
+          <input
+            className={styles.resetInput}
+            type="text"
+            placeholder="Email or Username"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            required
+          />
 
-        <button type="submit" className="reset-button">
-          Reset your password
-        </button>
+          <button type="submit" className={styles.resetButton}>
+            Reset your password
+          </button>
 
-        <div className="reset-divider">
-          <hr />
-          <span>OR</span>
-          <hr />
+          <div className={styles.resetDivider}>
+            <hr />
+            <span>OR</span>
+            <hr />
+          </div>
+
+          <Link to="/signup" className={styles.resetCreateLink}>
+            Create new account
+          </Link>
+        </form>
+
+        <div className={styles.resetBottomBar}>
+          <Link to="/">Back to login</Link>
         </div>
-
-        <Link to="/signup" className="reset-create-link">
-          Create new account
-        </Link>
-
-      </form>
-      <div className="reset-bottom-bar">
-        <Link to="/">Back to login</Link>
       </div>
-     </div>
-      
     </div>
   );
 };

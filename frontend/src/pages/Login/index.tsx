@@ -7,7 +7,7 @@ import logo from "@/assets/logo.svg";
 import phone from "@/assets/phone.svg";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState(""); 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,35 +18,35 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    const result = await loginUser({ email, password });
+    const result = await loginUser({ identifier, password });
 
     if (result.success) {
       navigate("/feed");
     } else {
-      setError(result.message || "Ошибка входа");
+      setError(result.message || "Login error");
     }
 
     setLoading(false);
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.left}>
+    <div className={styles.pageContainer}>
+      <div className={styles.phonePreview}>
         <img src={phone} alt="phone preview" />
       </div>
 
-      <div className={styles.right}>
+      <div className={styles.loginContent}>
         <div className={styles.loginBox}>
           <img src={logo} alt="logo" className={styles.logo} />
 
-          <form onSubmit={handleSubmit} className={styles.form}>
+          <form onSubmit={handleSubmit} className={styles.loginForm}>
             <input
-              type="email"
-              placeholder="Username or email"
-              value={email}
+              type="text"
+              placeholder="Username or Email"
+              value={identifier}
               onChange={(e) => {
-                setEmail(e.target.value);
-                setError(""); // сбрасываем ошибку при вводе
+                setIdentifier(e.target.value);
+                setError("");
               }}
               required
             />
@@ -57,7 +57,7 @@ export default function Login() {
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
-                setError(""); // сбрасываем ошибку при вводе
+                setError("");
               }}
               required
             />
@@ -69,17 +69,23 @@ export default function Login() {
             </button>
           </form>
 
-          <div className={styles.separator}>OR</div>
+          <div className={styles.divider}>
+            <hr />
+            <span>OR</span>
+            <hr />
+          </div>
 
-          <Link to="/reset" className={styles.forgot}>
+          <Link to="/reset" className={styles.forgotPassword}>
             Forgot password?
           </Link>
         </div>
 
-        <div className={styles.signupBox}>
+        <div className={styles.signupPrompt}>
           <p>
-            Don't have an account?{" "}
-            <Link to="/signup" className={styles.signup}>Sign up</Link>
+            Don’t have an account?{" "}
+            <Link to="/signup" className={styles.signupLink}>
+              Sign up
+            </Link>
           </p>
         </div>
       </div>

@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 
-type User = {
-  id: string;
-  name: string;
+export type User = {
+  _id: string;
   email: string;
-  // добавь, если есть аватар или другие поля
+  fullName: string;
+  username: string;
 };
 
 type AuthState = {
@@ -13,6 +13,7 @@ type AuthState = {
   isLoggedIn: boolean;
   login: (user: User, token: string) => void;
   logout: () => void;
+  updateUser: (user: User) => void;
 };
 
 const useAuthStore = create<AuthState>((set) => ({
@@ -28,6 +29,10 @@ const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     localStorage.removeItem('token');
     set({ user: null, token: null, isLoggedIn: false });
+  },
+
+  updateUser: (user) => {
+    set((state) => ({ ...state, user }));
   },
 }));
 

@@ -1,51 +1,41 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: #fafafa;
-}
-
-.register-wrapper {
+.registerWrapper {
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.register-box {
+.registerBox {
+  margin-top: 81px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  height: 792px;
 }
 
-.register-form {
+.registerForm {
   width: 350px;
   border: 1px solid #dbdbdb;
-  padding: 40px 40px 20px;
-  background-color: white;
+  padding: 0 40px ;
   display: flex;
   flex-direction: column;
   gap: 10px;
   text-align: center;
 }
 
-.register-logo {
-  width: 175px;
-  margin: 0 auto 10px;
+.registerLogo {
+  padding-top: 19px;
+  margin: 0 auto;
 }
 
-.register-subtitle {
+.registerSubtitle {
   color: #737373;
   font-size: 16px;
   font-weight: 500;
-  margin-bottom: 15px;
+  margin-bottom: 26px;
 }
 
-.register-form input {
+.registerForm input {
   height: 36px;
   padding: 8px;
   border: 1px solid #dbdbdb;
@@ -54,7 +44,7 @@ body {
   background: #fafafa;
 }
 
-.register-btn {
+.registerBtn {
   background-color: #0095f6;
   color: white;
   font-weight: 600;
@@ -63,31 +53,32 @@ body {
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  margin-top: 8px;
+  margin-top: 26px;
+  margin-bottom: 25px;
 }
 
-.register-btn:disabled {
+.registerBtn:disabled {
   opacity: 0.6;
   cursor: default;
 }
 
-.register-error {
+.registerError {
   color: red;
   font-size: 12px;
 }
 
-.register-info {
+.registerInfo {
   font-size: 12px;
   color: #737373;
-  margin-top: 5px;
+  margin-top: 18px;
 }
 
-.register-info span {
+.registerInfo span {
   color: #00376b;
   cursor: pointer;
 }
 
-.register-footer {
+.registerFooter {
   border: 1px solid #dbdbdb;
   background-color: white;
   width: 100%;
@@ -97,7 +88,7 @@ body {
   font-size: 14px;
 }
 
-.register-footer a {
+.registerFooter a {
   color: #0095f6;
   text-decoration: none;
   font-weight: 500;
