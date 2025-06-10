@@ -3,29 +3,33 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
+  background-color: #fafafa;
 }
 
 .registerBox {
-  margin-top: 81px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 792px;
+  width: 100%;
+  max-width: 350px;
 }
 
 .registerForm {
-  width: 350px;
+  width: 100%;
   border: 1px solid #dbdbdb;
-  padding: 0 40px ;
+  padding: 40px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   text-align: center;
+  background-color: white;
+  border-radius: 1px;
 }
 
 .registerLogo {
-  padding-top: 19px;
-  margin: 0 auto;
+  height: 51px;
+  margin: 0 auto 12px;
 }
 
 .registerSubtitle {
@@ -63,8 +67,13 @@
 }
 
 .registerError {
-  color: red;
-  font-size: 12px;
+  color: #ed4956;
+  font-size: 14px;
+  background-color: #ffeaea;
+  padding: 10px;
+  border-radius: 6px;
+  margin: 10px 0;
+  text-align: center;
 }
 
 .registerInfo {
@@ -82,14 +91,34 @@
   border: 1px solid #dbdbdb;
   background-color: white;
   width: 100%;
-  padding: 20px 40px;
+  padding: 20px;
   margin-top: 10px;
   text-align: center;
   font-size: 14px;
+  border-radius: 1px;
 }
 
 .registerFooter a {
   color: #0095f6;
   text-decoration: none;
   font-weight: 500;
+}
+
+@media (min-width: 1440px) {
+  .registerWrapper {
+    padding: 40px;
+  }
+  
+  .registerBox {
+    max-width: 400px;
+  }
+  
+  .registerForm {
+    padding: 50px;
+  }
+  
+  .registerLogo {
+    height: 60px;
+    margin-bottom: 20px;
+  }
 }

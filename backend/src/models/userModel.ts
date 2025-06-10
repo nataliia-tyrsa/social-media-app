@@ -10,6 +10,8 @@ export interface IUser extends Document {
   lastLogin?: Date;
   followers: Types.ObjectId[];
   following: Types.ObjectId[];
+  bio?: string;
+  avatarUrl?: string;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -53,23 +55,28 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: true,
       select: false,
-      minlength: [8, "Password must be at least 8 characters long"],
-      validate: {
-        validator: function(v: string) {
-          return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(v);
-        },
-        message: "Password must include uppercase, lowercase, number, and special character"
-      }
+      minlength: [6, "Password must be at least 6 characters long"]
     },
     lastLogin: Date,
     followers: [{
       type: Schema.Types.ObjectId,
-      ref: "User"
+      ref: "User",
+      default: []
     }],
     following: [{
       type: Schema.Types.ObjectId,
-      ref: "User"
-    }]
+      ref: "User",
+      default: []
+    }],
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: [160, "Bio must be at most 160 characters long"]
+    },
+    avatarUrl: {
+      type: String,
+      trim: true
+    }
   },
   {
     timestamps: true,
@@ -80,7 +87,7 @@ userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
   try {
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error: any) {

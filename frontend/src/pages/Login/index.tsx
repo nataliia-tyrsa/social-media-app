@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { loginUser } from "@/services/auth";
+import { loginUser } from "../../services/auth";
 import styles from "./Login.module.css";
 
 import logo from "@/assets/logo.svg";
@@ -82,8 +82,8 @@ export default function Login() {
 
         <div className={styles.signupPrompt}>
           <p>
-            Don’t have an account?{" "}
-            <Link to="/signup" className={styles.signupLink}>
+            Don't have an account?{" "}
+            <Link to="/register" className={styles.signupLink}>
               Sign up
             </Link>
           </p>

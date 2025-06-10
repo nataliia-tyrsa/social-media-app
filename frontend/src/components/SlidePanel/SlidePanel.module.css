@@ -1,0 +1,70 @@
+.panel {
+    position: fixed;
+    top: 0;
+    left: 200px; 
+    width: 420px;
+    height: 100vh;
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    padding: 24px;
+    animation: slideIn 0.3s ease forwards;
+    z-index: 100;
+  }
+  
+  @keyframes slideIn {
+    from {
+      transform: translateX(-40px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+
+.userItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.userItem:hover {
+  background-color: #f9f9f9;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.username {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background-color: #fafafa;
+  outline: none;
+  transition: border 0.2s ease;
+}
+
+.searchInput:focus {
+  border-color: #ccc;
+  background-color: #fff;
+}

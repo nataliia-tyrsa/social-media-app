@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { registerUser } from '../../services/auth';
 import styles from "./Register.module.css";
 import logo from '../../assets/logo.svg';
 
@@ -11,6 +12,7 @@ const Register = () => {
     password: '',
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -20,29 +22,17 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
-    try {
-      const res = await fetch('http://localhost:3000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-        credentials: 'include'
-      });
+    const result = await registerUser(formData);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
+    if (result.success) {
       navigate('/');
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Unexpected error');
-      }
+    } else {
+      setError(result.message || 'Registration failed');
     }
+
+    setLoading(false);
   };
 
   return (
@@ -99,12 +89,14 @@ const Register = () => {
             <span>Privacy Policy</span> and <span>Cookies Policy</span>.
           </p>
 
-          <button type="submit" className={styles.registerBtn}>Sign up</button>
+          <button type="submit" className={styles.registerBtn} disabled={loading}>
+            {loading ? 'Signing up...' : 'Sign up'}
+          </button>
         </form>
 
         <div className={styles.registerFooter}>
           <p>
-            Have an account? <Link to="/">Log in</Link>
+            Have an account? <Link to="/login">Log in</Link>
           </p>
         </div>
       </div>

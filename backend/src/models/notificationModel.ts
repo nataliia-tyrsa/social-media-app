@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
-export type NotificationType = "like" | "comment" | "follow";
+const NOTIFICATION_TYPES = ["like", "comment", "follow"] as const;
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 export interface INotification extends Document {
   user: Types.ObjectId;
@@ -26,7 +27,7 @@ const notificationSchema = new Schema<INotification>(
     },
     type: {
       type: String,
-      enum: ["like", "comment", "follow"],
+      enum: NOTIFICATION_TYPES,
       required: true,
     },
     post: {
@@ -42,6 +43,19 @@ const notificationSchema = new Schema<INotification>(
     timestamps: true,
   }
 );
+
+notificationSchema.virtual("message").get(function (this: INotification) {
+  switch (this.type) {
+    case "like":
+      return "liked your post";
+    case "comment":
+      return "commented on your post";
+    case "follow":
+      return "started following you";
+    default:
+      return "";
+  }
+});
 
 const NotificationModel = mongoose.model<INotification>("Notification", notificationSchema);
 export default NotificationModel;

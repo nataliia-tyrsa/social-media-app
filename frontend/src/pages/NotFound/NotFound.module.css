@@ -1,0 +1,29 @@
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    gap: 45px;
+    height: 100vh;
+  }
+  
+  .imageWrapper img {
+    max-width: 300px;
+    height: auto;
+  }
+
+  
+  .text h1 {
+    font-size: 36px;
+    font-weight: 700;
+    color: rgba(0, 0, 0, 1); 
+  }
+  
+  .text p {
+    color: #666;
+    line-height: 1.6;
+    margin-top: 20px;
+  }
+  
+
+

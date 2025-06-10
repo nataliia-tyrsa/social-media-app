@@ -3,7 +3,6 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 export interface IFollow extends Document {
   follower: Types.ObjectId;
   following: Types.ObjectId;
-  createdAt: Date;
 }
 
 const followSchema = new Schema<IFollow>(

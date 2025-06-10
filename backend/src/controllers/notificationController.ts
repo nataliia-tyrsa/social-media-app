@@ -16,7 +16,15 @@ export const getNotifications = async (
       return;
     }
 
-    const notifications = await Notification.find({ user: userId }).sort({ createdAt: -1 });
+    const filter: any = { user: userId };
+    if (req.query.unreadOnly === "true") {
+      filter.isRead = false;
+    }
+
+    const notifications = await Notification.find(filter)
+      .populate("fromUser", "username avatar")
+      .sort({ createdAt: -1 });
+
     res.status(200).json(notifications);
   } catch (err) {
     console.error("Notification fetch error:", err);

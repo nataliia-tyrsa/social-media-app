@@ -38,7 +38,7 @@ export const addComment = async (
 
     post.comments.push(newComment);
     await post.save();
-    await post.populate("comments.author", "username fullName");
+    await post.populate("comments.author", "username fullName avatarUrl");
 
     res.status(200).json(post);
   } catch (err) {
@@ -85,7 +85,7 @@ export const editComment = async (
 
     comment.content = content.trim();
     await post.save();
-    await post.populate("comments.author", "username fullName");
+    await post.populate("comments.author", "username fullName avatarUrl");
 
     res.status(200).json(post);
   } catch (err) {
@@ -121,7 +121,7 @@ export const deleteComment = async (
 
     post.comments = post.comments.filter(c => c._id.toString() !== commentId);
     await post.save();
-    await post.populate("comments.author", "username fullName");
+    await post.populate("comments.author", "username fullName avatarUrl");
 
     res.status(200).json(post);
   } catch (err) {
@@ -193,6 +193,26 @@ export const getCommentLikes = async (
       likes: comment.likes,
       totalLikes: comment.likes.length
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getCommentsByPostId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { postId } = req.params;
+    const post = await Post.findById(postId).populate("comments.author", "username fullName avatarUrl");
+
+    if (!post) {
+      res.status(404).json({ message: "Post not found" });
+      return;
+    }
+
+    res.status(200).json(post.comments);
   } catch (err) {
     next(err);
   }

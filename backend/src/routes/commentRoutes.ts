@@ -5,7 +5,8 @@ import {
   editComment,
   deleteComment,
   toggleCommentLike,
-  getCommentLikes
+  getCommentLikes,
+  getCommentsByPostId
 } from "../controllers/commentController";
 
 const router = express.Router();
@@ -15,5 +16,7 @@ router.put("/:postId/:commentId", protect, editComment);
 router.delete("/:postId/:commentId", protect, deleteComment);
 router.post("/:postId/:commentId/like", protect, toggleCommentLike);
 router.get("/:postId/:commentId/likes", getCommentLikes);
+
+router.get("/:postId", getCommentsByPostId);
 
 export default router;

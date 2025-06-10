@@ -11,10 +11,15 @@ export const searchUsers = async (req: Request, res: Response): Promise<void> =>
     }
 
     const users = await User.find({
-      username: { $regex: query, $options: "i" },
-    }).select("username fullName avatar");
+      $or: [
+        { username: { $regex: query, $options: "i" } },
+        { fullName: { $regex: query, $options: "i" } }
+      ]
+    })
+      .select("username fullName avatarUrl")
+      .lean();
 
-    res.status(200).json(users);
+    res.status(200).json({ users });
   } catch (error) {
     console.error("Search error:", error);
     res.status(500).json({ message: "Failed to search users" });

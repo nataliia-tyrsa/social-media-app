@@ -1,12 +1,6 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 
-export interface IExploreItem extends Document {
-  post: Types.ObjectId;
-  priority: number;
-  createdAt: Date;
-}
-
-const exploreSchema = new Schema<IExploreItem>(
+const exploreSchema = new Schema(
   {
     post: {
       type: Schema.Types.ObjectId,
@@ -24,4 +18,4 @@ const exploreSchema = new Schema<IExploreItem>(
   }
 );
 
-export default mongoose.model<IExploreItem>("Explore", exploreSchema);
+export default mongoose.model("Explore", exploreSchema);

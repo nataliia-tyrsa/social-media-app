@@ -3,7 +3,6 @@ import mongoose, { Schema, Document, Types } from "mongoose";
 export interface ILike extends Document {
   user: Types.ObjectId;
   post: Types.ObjectId;
-  createdAt: Date;
 }
 
 const likeSchema = new Schema<ILike>(

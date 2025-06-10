@@ -18,6 +18,8 @@ interface UpdateProfileData {
   fullName?: string;
   username?: string;
   email?: string;
+  bio?: string;
+  avatarUrl?: string;
   currentPassword?: string;
   newPassword?: string;
 }
@@ -48,16 +50,24 @@ export const registerUser = async (data: RegisterData): Promise<{ token: string;
 export const loginUser = async (data: LoginData): Promise<{ token: string; user: Partial<IUser> }> => {
   const { identifier, password } = data;
 
+  console.log('Login attempt:', { identifier, passwordLength: password.length });
+
   const user = await User.findOne({
     $or: [{ email: identifier }, { username: identifier }]
   }).select("+password");
 
+  console.log('User found:', !!user, user?.username);
+
   if (!user) {
+    console.log('User not found for identifier:', identifier);
     throw new Error("User not found");
   }
 
   const isMatch = await user.comparePassword(password);
+  console.log('Password match:', isMatch);
+  
   if (!isMatch) {
+    console.log('Invalid credentials for user:', user.username);
     throw new Error("Invalid credentials");
   }
 
@@ -67,6 +77,7 @@ export const loginUser = async (data: LoginData): Promise<{ token: string; user:
   const token = generateToken(user._id.toString());
   const { password: _, ...userData } = user.toObject();
 
+  console.log('Login successful for user:', user.username);
   return { token, user: userData };
 };
 
@@ -80,6 +91,8 @@ export const updateProfile = async (
   }
 
   if (data.fullName) user.fullName = data.fullName;
+  if (data.bio !== undefined) user.bio = data.bio;
+  if (data.avatarUrl) user.avatarUrl = data.avatarUrl;
   
   if (data.username) {
     const existingUser = await User.findOne({ 

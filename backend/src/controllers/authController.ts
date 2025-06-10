@@ -13,9 +13,9 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+// Relaxed password validation - only require minimum length
 const isValidPassword = (password: string): boolean => {
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-  return passwordRegex.test(password);
+  return password.length >= 6;
 };
 
 export const registerUser = async (
@@ -38,7 +38,7 @@ export const registerUser = async (
 
     if (!isValidPassword(password)) {
       res.status(400).json({ 
-        message: "Password must be at least 8 characters long and contain uppercase, lowercase letters, numbers and special characters" 
+        message: "Password must be at least 6 characters long" 
       });
       return;
     }
@@ -49,7 +49,6 @@ export const registerUser = async (
     if (err.message === "User already exists") {
       res.status(400).json({ message: err.message });
     } else {
-      console.error("Registration error:", err);
       res.status(500).json({ message: "Internal server error during registration" });
     }
   }
@@ -60,21 +59,23 @@ export const loginUser = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { identifier, password } = req.body;
+  const { email, username, password } = req.body;
+  const identifier = email || username;
 
   try {
     if (!identifier || !password) {
-      res.status(400).json({ message: "Identifier and password are required" });
+      res.status(400).json({ message: "Username/Email and password are required" });
       return;
     }
 
     const result = await authService.loginUser({ identifier, password });
     res.status(200).json(result);
   } catch (err: any) {
-    if (err.message === "User not found" || err.message === "Invalid credentials") {
-      res.status(401).json({ message: err.message });
+    if (err.message === "User not found") {
+      res.status(401).json({ message: "User not found" });
+    } else if (err.message === "Invalid credentials") {
+      res.status(401).json({ message: "Invalid password" });
     } else {
-      console.error("Login error:", err);
       res.status(500).json({ message: "Internal server error during login" });
     }
   }
@@ -85,7 +86,7 @@ export const updateProfile = async (
   res: Response
 ): Promise<void> => {
   const userId = req.user?._id;
-  const { fullName, username, email, currentPassword, newPassword } = req.body;
+  const { fullName, username, email, bio, avatarUrl, currentPassword, newPassword } = req.body;
 
   try {
     if (!userId) {
@@ -93,13 +94,17 @@ export const updateProfile = async (
       return;
     }
 
-    const result = await authService.updateProfile(userId, {
+    const updateData: any = {
       fullName,
       username,
       email,
+      bio,
+      avatarUrl,
       currentPassword,
       newPassword
-    });
+    };
+
+    const result = await authService.updateProfile(userId, updateData);
 
     res.status(200).json({ message: "Profile updated successfully", user: result });
   } catch (err: any) {
@@ -110,8 +115,26 @@ export const updateProfile = async (
     } else if (err.message === "Current password is incorrect") {
       res.status(401).json({ message: err.message });
     } else {
-      console.error("Update profile error:", err);
       res.status(500).json({ message: "Error updating profile" });
     }
+  }
+};
+
+export const getCurrentUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.user?._id;
+
+    if (!userId) {
+      res.status(401).json({ message: "Not authenticated" });
+      return;
+    }
+
+    const result = await authService.getUserById(userId);
+    res.status(200).json({ user: result });
+  } catch (err: any) {
+    res.status(500).json({ message: "Error fetching user data" });
   }
 };

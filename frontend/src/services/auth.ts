@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
-import type { User } from "@/store/authStore";
-import useAuthStore from "@/store/authStore";
+import type { User } from "../store/authStore";
+import useAuthStore from "../store/authStore";
 
 const API_URL = "http://localhost:3000/api";
 
@@ -20,6 +20,8 @@ interface UpdateProfilePayload {
   fullName?: string;
   username?: string;
   email?: string;
+  bio?: string;
+  avatarUrl?: string;
   currentPassword?: string;
   newPassword?: string;
 }
@@ -118,12 +120,8 @@ export async function updateProfile(
   }
 }
 
-export async function getCurrentUser(): Promise<{ success: boolean; message?: string }> {
+export async function getCurrentUser(token: string): Promise<{ success: boolean; message?: string }> {
   try {
-    const token = useAuthStore.getState().token;
-    if (!token) {
-      return { success: false, message: "Not authenticated" };
-    }
     const response = await axios.get<{ user: User }>(`${API_URL}/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,

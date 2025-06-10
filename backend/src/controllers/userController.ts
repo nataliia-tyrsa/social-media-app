@@ -1,5 +1,83 @@
 import { Request, Response, NextFunction } from "express";
-import User from "../models/userModel";
+import User, { IUser } from "../models/userModel";
+import bcrypt from "bcryptjs";
+
+export const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const user = req.user as IUser;
+    const { fullName, username, bio, avatarUrl, currentPassword, newPassword } = req.body;
+
+    const currentUser = await User.findById(user._id);
+    if (!currentUser) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    // Check if username is already taken (if changing username)
+    if (username && username !== currentUser.username) {
+      const existingUser = await User.findOne({ username });
+      if (existingUser) {
+        res.status(400).json({ message: "Username already taken" });
+        return;
+      }
+      currentUser.username = username;
+    }
+
+    // Update basic profile fields
+    if (fullName) currentUser.fullName = fullName;
+    if (bio !== undefined) currentUser.bio = bio;
+    if (avatarUrl) currentUser.avatarUrl = avatarUrl;
+
+    // Handle password change
+    if (currentPassword && newPassword) {
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, currentUser.password);
+      if (!isCurrentPasswordValid) {
+        res.status(400).json({ message: "Current password is incorrect" });
+        return;
+      }
+      
+      if (newPassword.length < 6) {
+        res.status(400).json({ message: "New password must be at least 6 characters long" });
+        return;
+      }
+      
+      const saltRounds = 12;
+      currentUser.password = await bcrypt.hash(newPassword, saltRounds);
+    }
+
+    await currentUser.save();
+
+    // Return user without password
+    const updatedUser = await User.findById(currentUser._id).select("-password");
+    
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getAllUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const users = await User.find({})
+      .select("username fullName _id avatarUrl bio")
+      .sort({ username: 1 });
+
+    res.status(200).json(users);
+  } catch (err) {
+    next(err);
+  }
+};
 
 export const searchUsers = async (
   req: Request,
@@ -8,14 +86,15 @@ export const searchUsers = async (
 ): Promise<void> => {
   try {
     const { query } = req.query;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
 
     if (!query || typeof query !== "string") {
       res.status(400).json({ message: "Search query is required" });
       return;
     }
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
 
     const searchRegex = new RegExp(query, "i");
     const users = await User.find({
@@ -24,7 +103,7 @@ export const searchUsers = async (
         { fullName: searchRegex }
       ]
     })
-      .select("-password -resetPasswordToken -resetPasswordExpires")
+      .select("username fullName _id avatarUrl bio")
       .skip(skip)
       .limit(limit);
 
@@ -82,7 +161,7 @@ export const toggleFollow = async (
       return;
     }
 
-    if (currentUser._id.toString() === targetUser._id.toString()) {
+    if (String(currentUser._id) === String(targetUser._id)) {
       res.status(400).json({ message: "Cannot follow yourself" });
       return;
     }
@@ -91,10 +170,10 @@ export const toggleFollow = async (
 
     if (isFollowing) {
       currentUser.following = currentUser.following.filter(
-        id => id.toString() !== targetUser._id.toString()
+        id => String(id) !== String(targetUser._id)
       );
       targetUser.followers = targetUser.followers.filter(
-        id => id.toString() !== currentUser._id.toString()
+        id => String(id) !== String(currentUser._id)
       );
     } else {
       currentUser.following.push(targetUser._id);

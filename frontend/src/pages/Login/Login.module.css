@@ -1,59 +1,94 @@
 .pageContainer {
   width: 100%;
-  height: 765px;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 32px;
+  padding: 20px;
+  background-color: #fafafa;
+}
+
+.phonePreview {
+  display: flex;
+  align-items: center;
 }
 
 .phonePreview img {
-  padding-top: 86px;
   max-width: 380px;
   max-height: 581px;
+  object-fit: contain;
 }
 
 .loginContent {
-  padding-top: 94px;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .loginBox {
-  height: 412px;
   width: 350px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 1px solid rgba(219, 219, 219, 1);
+  border: 1px solid #dbdbdb;
   margin-bottom: 10px;
+  background-color: white;
+  padding: 40px;
+  border-radius: 1px;
 }
 
 .logo {
   width: 190px;
   height: 107px;
-  margin-top: 30.5px;
+  margin-bottom: 20px;
+  object-fit: contain;
 }
 
 .loginForm {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  position: relative;
 }
 
 .loginForm input {
-  width: 268px;
+  width: 100%;
   height: 38px;
   font-size: 12px;
   border-radius: 3px;
-  border: 1px solid rgba(219, 219, 219, 1);
+  border: 1px solid #dbdbdb;
   margin-bottom: 6px;
-  padding-left: 8px;
-  color: rgba(115, 115, 115, 1);
+  padding: 0 8px;
+  color: #262626;
+  background-color: #fafafa;
+  box-sizing: border-box;
+}
+
+.loginForm input:focus {
+  outline: none;
+  border-color: #a8a8a8;
+  background-color: white;
+}
+
+.error {
+  color: #ed4956;
+  font-size: 14px;
+  background-color: #ffeaea;
+  padding: 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+  text-align: center;
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .loginForm button {
-  width: 268px;
+  width: 100%;
   height: 32px;
-  background-color: rgba(0, 149, 246, 1);
+  background-color: #0095f6;
   border: none;
   border-radius: 8px;
   font-size: 14px;
@@ -61,6 +96,27 @@
   margin-bottom: 22px;
   color: white;
   cursor: pointer;
+  font-weight: 600;
+}
+
+.loginForm button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.loginForm button:hover:not(:disabled) {
+  background-color: #1877f2;
+}
+
+.signupPrompt {
+  width: 350px;
+  border: 1px solid #dbdbdb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  padding: 20px;
+  border-radius: 1px;
 }
 
 .divider {
@@ -94,15 +150,6 @@
   margin-bottom: 23px;
 }
 
-.signupPrompt {
-  width: 350px;
-  height: 63px;
-  border: 1px solid rgba(219, 219, 219, 1);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .signupLink {
   font-size: 14px;
   color: rgba(0, 149, 246, 1);
@@ -111,8 +158,40 @@
   cursor: pointer;
 }
 
-.error {
-  color: red;
-  margin: 5px 0;
-  font-size: 12px;
+@media (min-width: 1440px) {
+  .pageContainer {
+    gap: 60px;
+    padding: 40px;
+  }
+  
+  .loginBox {
+    width: 400px;
+    padding: 50px;
+  }
+  
+  .logo {
+    width: 220px;
+    height: 120px;
+    margin-bottom: 30px;
+  }
+  
+  .signupPrompt {
+    width: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pageContainer {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .phonePreview {
+    display: none;
+  }
+  
+  .loginBox, .signupPrompt {
+    width: 100%;
+    max-width: 350px;
+  }
 }

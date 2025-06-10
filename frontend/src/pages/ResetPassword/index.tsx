@@ -41,13 +41,13 @@ const ResetPassword = () => {
             <hr />
           </div>
 
-          <Link to="/signup" className={styles.resetCreateLink}>
+          <Link to="/register" className={styles.resetCreateLink}>
             Create new account
           </Link>
         </form>
 
         <div className={styles.resetBottomBar}>
-          <Link to="/">Back to login</Link>
+          <Link to="/login">Back to login</Link>
         </div>
       </div>
     </div>

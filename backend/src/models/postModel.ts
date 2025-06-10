@@ -35,13 +35,10 @@ const postSchema = new Schema<IPost>(
     },
     likes: [{
       type: Schema.Types.ObjectId,
-      ref: "User"
+      ref: "User",
+      default: []
     }],
     comments: [{
-      _id: {
-        type: Schema.Types.ObjectId,
-        auto: true
-      },
       author: {
         type: Schema.Types.ObjectId,
         ref: "User",
@@ -58,7 +55,8 @@ const postSchema = new Schema<IPost>(
       },
       likes: [{
         type: Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        default: []
       }]
     }]
   },
