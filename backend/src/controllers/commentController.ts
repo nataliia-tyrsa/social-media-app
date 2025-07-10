@@ -41,7 +41,7 @@ export const addComment = async (
     await post.save();
     await post.populate("comments.author", "username fullName avatarUrl");
 
-    // Create notification for post author (only if not commenting on own post)
+
     if (post.author && post.author._id.toString() !== user._id.toString()) {
       await createNotification(
         post.author._id,
