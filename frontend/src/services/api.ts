@@ -96,6 +96,13 @@ export const postsApi = {
     return response.data;
   },
 
+  async getPostById(postId: string): Promise<Post> {
+    const response = await axios.get(`${API_URL}/posts/${postId}`, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  },
+
   async createPost(content: string, image?: string): Promise<Post> {
     const response = await axios.post(`${API_URL}/posts`, {
       content,
@@ -142,11 +149,8 @@ export const postsApi = {
     });
   },
 
-  async updatePost(postId: string, content: string, image?: string): Promise<Post> {
-    const response = await axios.put(`${API_URL}/posts/${postId}`, {
-      content,
-      image
-    }, {
+  async updatePost(postId: string, data: { content?: string; imageUrl?: string }): Promise<Post> {
+    const response = await axios.put(`${API_URL}/posts/${postId}`, data, {
       headers: getAuthHeaders()
     });
     return response.data;
@@ -181,7 +185,7 @@ export const usersApi = {
   },
 
   async searchUsers(query: string): Promise<User[]> {
-    const response = await axios.get(`${API_URL}/search?q=${query}`, {
+    const response = await axios.get(`${API_URL}/search/users?q=${query}`, {
       headers: getAuthHeaders()
     });
     return response.data.users || response.data;
@@ -230,6 +234,13 @@ export const messagesApi = {
       headers: getAuthHeaders()
     });
     return response.data.count || 0;
+  },
+
+  async getLastUnreadMessage(): Promise<{ userId: string; username: string } | null> {
+    const response = await axios.get(`${API_URL}/messages/last-unread`, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
   }
 };
 
@@ -282,16 +293,16 @@ export const notificationsApi = {
     return response.data;
   },
 
+  async getUnreadCount(): Promise<{ count: number }> {
+    const response = await axios.get(`${API_URL}/notifications/unread-count`, {
+      headers: getAuthHeaders()
+    });
+    return response.data;
+  },
+
   async markAsRead(notificationId: string): Promise<void> {
     await axios.put(`${API_URL}/notifications/${notificationId}/read`, {}, {
       headers: getAuthHeaders()
     });
-  },
-
-  async getUnreadCount(): Promise<number> {
-    const response = await axios.get(`${API_URL}/notifications/unread-count`, {
-      headers: getAuthHeaders()
-    });
-    return response.data.count || 0;
   }
 }; 

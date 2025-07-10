@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Smile } from 'lucide-react';
 import { Post, usersApi } from '../../services/api';
 import { User } from '../../store/authStore';
 import useAuthStore from '../../store/authStore';
 import EmojiPicker from '../EmojiPicker';
+import EditPostModal from '../EditPostModal';
 import { timeAgo } from '../../utils/timeAgo';
+import { UserAvatar } from '../../utils/userAvatar';
 import styles from './PostModal.module.css';
 
 interface PostModalProps {
@@ -14,14 +15,17 @@ interface PostModalProps {
   onLike: () => void;
   onComment: (content: string) => void;
   currentUser: User;
+  onPostUpdated?: (updatedPost: Post) => void;
+  onPostDeleted?: () => void;
 }
 
-const PostModal = ({ post, onClose, onLike, onComment, currentUser }: PostModalProps) => {
+const PostModal = ({ post, onClose, onLike, onComment, currentUser, onPostUpdated, onPostDeleted }: PostModalProps) => {
   const [commentText, setCommentText] = useState('');
   const [localPost, setLocalPost] = useState(post);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (post) {
@@ -132,9 +136,41 @@ const PostModal = ({ post, onClose, onLike, onComment, currentUser }: PostModalP
     setEmojiPickerOpen(!emojiPickerOpen);
   };
 
+  const handlePostUpdated = (updatedPost: Post) => {
+    setLocalPost(updatedPost);
+    if (onPostUpdated) {
+      onPostUpdated(updatedPost);
+    }
+  };
+
+  const handlePostDeleted = () => {
+    if (onPostDeleted) {
+      onPostDeleted();
+    }
+    onClose();
+  };
+
+  const isAuthor = currentUser && localPost.author._id === currentUser._id;
+
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        {window.innerWidth <= 768 && (
+          <button className={styles.backButton} onClick={onClose}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+        )}
         <div className={styles.content}>
           <div className={styles.imageSection}>
             {(localPost.image || localPost.imageUrl) ? (
@@ -151,119 +187,100 @@ const PostModal = ({ post, onClose, onLike, onComment, currentUser }: PostModalP
           </div>
           
           <div className={styles.contentSection}>
-            <div className={styles.header}>
-              <Link to={`/profile/${localPost.author._id}`}>
-                <img 
-                  src={localPost.author.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'} 
-                  alt={`${localPost.author.username || 'User'} avatar`}
-                  className={styles.avatar}
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face';
-                  }}
-                />
+            <div className={styles.caption}>
+              <UserAvatar
+                avatarUrl={localPost.author.avatarUrl}
+                username={localPost.author.username}
+                userId={localPost.author._id}
+                size={32}
+                className={styles.captionAvatar}
+              />
+              <Link to={`/profile/${localPost.author._id}`} className={styles.captionUsername}>
+                {localPost.author.username || 'Unknown User'}
               </Link>
-              <div className={styles.userInfo}>
-                <Link to={`/profile/${localPost.author._id}`}>
-                  <div className={styles.username}>{localPost.author.username || 'Unknown User'}</div>
-                </Link>
-              </div>
-              {currentUser && post.author._id !== currentUser._id && (
+              {localPost.content && <span className={styles.captionText}>{localPost.content}</span>}
+              
+              {isAuthor && (
                 <button 
-                  className={`${styles.followButton} ${isFollowing ? styles.following : ''}`}
-                  onClick={handleFollowToggle}
-                  disabled={followLoading}
+                  className={styles.editButton}
+                  onClick={() => setShowEditModal(true)}
+                  title="Edit post"
                 >
-                  {followLoading ? '...' : isFollowing ? 'Following' : 'Follow'}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="1"/>
+                    <circle cx="12" cy="5" r="1"/>
+                    <circle cx="12" cy="19" r="1"/>
+                  </svg>
                 </button>
               )}
-            </div>
-
-            <div className={styles.body}>
-              {localPost.content && (
-                <div className={styles.caption}>
-                  <Link to={`/profile/${localPost.author._id}`}>
-                    <img 
-                      src={localPost.author.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'} 
-                      alt={`${localPost.author.username || 'User'} avatar`}
-                      className={styles.captionAvatar}
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face';
-                      }}
-                    />
-                  </Link>
-                  <div className={styles.captionContent}>
-                    <Link to={`/profile/${localPost.author._id}`}>
-                      <span className={styles.captionUsername}>{localPost.author.username || 'Unknown User'}</span>
-                    </Link>
-                    {localPost.content}
-                  </div>
-                </div>
-              )}
               
-              <div className={styles.comments}>
-                {localPost.comments.map((comment) => (
-                  <div key={comment._id} className={styles.comment}>
-                    <Link to={`/profile/${comment.author._id}`}>
-                      <img 
-                        src={comment.author.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'} 
-                        alt={`${comment.author.username || 'User'} avatar`}
-                        className={styles.commentAvatar}
-                        onError={(e) => {
-                          e.currentTarget.src = 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face';
-                        }}
-                      />
-                    </Link>
-                    <div className={styles.commentContent}>
-                      <Link to={`/profile/${comment.author._id}`}>
-                        <span className={styles.commentUsername}>{comment.author.username || 'Unknown User'}</span>
-                      </Link>
-                      <span className={styles.commentText}>{comment.content}</span>
-                      <div className={styles.commentTime}>
-                        {timeAgo(comment.createdAt)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className={styles.footer}>
-              <div className={styles.actions}>
+              <div className={styles.actionsInline}>
                 <button 
-                  className={`${styles.likeButton} ${isLiked ? styles.liked : ''}`}
+                  className={`${styles.actionButton} ${isLiked ? styles.liked : ''}`}
                   onClick={onLike}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
-                    className={styles.heartIcon}
+                    className={styles.actionIcon}
                     fill={isLiked ? '#ed4956' : 'none'}
                     stroke={isLiked ? '#ed4956' : 'currentColor'}
                   >
                     <path d="M16.5 3c-1.74 0-3.41 1.01-4.5 2.09C10.91 4.01 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3z" />
                   </svg>
+                  <span className={styles.actionCount}>{localPost.likes.length}</span>
                 </button>
-                <button className={styles.commentButton}>
+                
+                <button className={styles.actionButton}>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
-                    className={styles.commentIcon}
+                    className={styles.actionIcon}
                     fill="none"
                     stroke="currentColor"
                   >
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                   </svg>
+                  <span className={styles.actionCount}>{localPost.comments.length}</span>
                 </button>
               </div>
-              
-              <div className={styles.likes}>
-                <strong>{localPost.likes.length}</strong> {localPost.likes.length === 1 ? 'like' : 'likes'}
-              </div>
-              
-              <div className={styles.time}>
-                {timeAgo(localPost.createdAt)}
-              </div>
-              
+            </div>
+            
+            <div className={styles.comments}>
+              {localPost.comments.map((comment) => {
+                console.log('Comment data:', comment);
+                return (
+                  <div key={comment._id} className={styles.comment}>
+                    <UserAvatar
+                      avatarUrl={comment.author.avatarUrl}
+                      username={comment.author.username}
+                      userId={comment.author._id}
+                      size={32}
+                      className={styles.commentAvatar}
+                    />
+                    <div className={styles.commentContent}>
+                      <div className={styles.commentMain}>
+                        <Link to={`/profile/${comment.author._id}`} className={styles.commentUsername}>
+                          {comment.author.username || 'Unknown User'}
+                        </Link>
+                        <span className={styles.commentText}>{comment.content}</span>
+                      </div>
+                      <span className={styles.commentTime}>{timeAgo(comment.createdAt)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className={styles.footer}>
               <form onSubmit={handleCommentSubmit} className={styles.commentForm}>
                 <input
                   type="text"
@@ -271,34 +288,67 @@ const PostModal = ({ post, onClose, onLike, onComment, currentUser }: PostModalP
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="Add a comment..."
                   className={styles.commentInput}
+                  autoComplete="off"
+                  onFocus={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
                 />
                 <button 
                   type="button"
                   className={styles.emojiButton}
                   onClick={toggleEmojiPicker}
                 >
-                  <Smile />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                    <line x1="9" y1="9" x2="9.01" y2="9"/>
+                    <line x1="15" y1="9" x2="15.01" y2="9"/>
+                  </svg>
                 </button>
                 <button 
                   type="submit" 
                   className={styles.submitButton}
                   disabled={!commentText.trim()}
                 >
-                  Post
+                  {commentText.trim() ? 'Post' : '...'}
                 </button>
               </form>
+              
+              {emojiPickerOpen && (
+                <>
+                  <div 
+                    className={styles.emojiOverlay}
+                    onClick={toggleEmojiPicker}
+                  />
+                  <div className={styles.emojiPickerWrapper}>
+                    <EmojiPicker 
+                      onEmojiSelect={handleEmojiSelect}
+                      isOpen={true}
+                      onClose={toggleEmojiPicker}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
-        
-        {emojiPickerOpen && (
-          <EmojiPicker
-            isOpen={true}
-            onEmojiSelect={handleEmojiSelect}
-            onClose={() => setEmojiPickerOpen(false)}
-          />
-        )}
       </div>
+      
+      {showEditModal && (
+        <EditPostModal
+          post={localPost}
+          onClose={() => setShowEditModal(false)}
+          onPostUpdated={handlePostUpdated}
+          onPostDeleted={handlePostDeleted}
+        />
+      )}
     </div>
   );
 };

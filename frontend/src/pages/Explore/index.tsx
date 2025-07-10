@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { postsApi, Post } from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import PostModal from '../../components/PostModal';
+import { useNavigate } from 'react-router-dom';
 import styles from './Explore.module.css';
 
 export default function Explore() {
@@ -9,6 +10,7 @@ export default function Explore() {
   const [loading, setLoading] = useState(true);
   const [activePost, setActivePost] = useState<Post | null>(null);
   const currentUser = useAuthStore(state => state.user);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadPosts();
@@ -18,8 +20,6 @@ export default function Explore() {
     try {
       setLoading(true);
       const allPosts = await postsApi.getAllPosts();
-      
-      // Shuffle posts randomly
       const shuffledPosts = [...allPosts].sort(() => Math.random() - 0.5);
       setPosts(shuffledPosts);
     } catch (error) {
@@ -30,7 +30,24 @@ export default function Explore() {
   };
 
   const handlePostClick = (post: Post) => {
-    setActivePost(post);
+    if (window.innerWidth <= 768) navigate(`/post/${post._id}`);
+    else setActivePost(post);
+  };
+
+  const handleCloseModal = async () => {
+    if (activePost) {
+      try {
+        const updatedPost = await postsApi.getPostById(activePost._id);
+        setPosts(prevPosts => 
+          prevPosts.map(post => 
+            post._id === activePost._id ? updatedPost : post
+          )
+        );
+      } catch (error) {
+        // ... existing code ...
+      }
+    }
+    setActivePost(null);
   };
 
   const handleLike = async () => {
@@ -62,6 +79,25 @@ export default function Explore() {
     
     try {
       const updatedPost = await postsApi.addComment(activePost._id, content);
+      
+      if (activePost && updatedPost) {
+        if (!updatedPost.author.avatarUrl && activePost.author.avatarUrl) {
+          updatedPost.author.avatarUrl = activePost.author.avatarUrl;
+        }
+        if (!updatedPost.author.fullName && activePost.author.fullName) {
+          updatedPost.author.fullName = activePost.author.fullName;
+        }
+        
+        if (currentUser) {
+          const lastComment = updatedPost.comments[updatedPost.comments.length - 1];
+          if (lastComment && lastComment.author._id === currentUser._id) {
+            lastComment.author.avatarUrl = currentUser.avatarUrl;
+            lastComment.author.username = currentUser.username;
+            lastComment.author.fullName = currentUser.fullName;
+          }
+        }
+      }
+      
       setActivePost(updatedPost);
       
       setPosts(prevPosts => 
@@ -87,11 +123,6 @@ export default function Explore() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h1>Explore</h1>
-        <p>Entdecke neue Posts aus der Community</p>
-      </div>
-      
       <div className={styles.gallery}>
         {posts.length === 0 ? (
           <div className={styles.noPosts}>
@@ -135,7 +166,7 @@ export default function Explore() {
       {activePost && currentUser && (
         <PostModal
           post={activePost}
-          onClose={() => setActivePost(null)}
+          onClose={handleCloseModal}
           onLike={handleLike}
           onComment={handleComment}
           currentUser={currentUser}

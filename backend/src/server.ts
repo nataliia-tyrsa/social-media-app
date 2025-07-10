@@ -17,6 +17,7 @@ import messageRoutes from "./routes/messageRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
 import searchRoutes from "./routes/searchRoutes";
 import uploadRoutes from "./routes/upload";
+import passwordResetRoutes from "./routes/passwordResetRoutes";
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -91,6 +92,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/password-reset", passwordResetRoutes);
 
 app.use((req: Request, res: Response) => {
   console.log(`404 - Route not found: ${req.method} ${req.url}`);
@@ -106,15 +108,36 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
+const userSockets = new Map<string, string>();
+
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
+  socket.on("user_connected", (userId: string) => {
+    userSockets.set(userId, socket.id);
+    console.log(`User ${userId} connected with socket ${socket.id}`);
+  });
+
   socket.on("chat message", (msg) => {
     console.log("Message received:", msg);
-    io.emit("chat message", msg);
+    
+    const recipientSocketId = userSockets.get(msg.to._id || msg.to);
+    const senderSocketId = userSockets.get(msg.from._id || msg.from);
+    
+    if (recipientSocketId) {
+      io.to(recipientSocketId).emit("chat message", msg);
+    }
+    if (senderSocketId && senderSocketId !== socket.id) {
+      io.to(senderSocketId).emit("chat message", msg);
+    }
   });
 
   socket.on("disconnect", () => {
+    const userId = [...userSockets.entries()].find(([_, socketId]) => socketId === socket.id)?.[0];
+    if (userId) {
+      userSockets.delete(userId);
+      console.log(`User ${userId} disconnected`);
+    }
     console.log("User disconnected:", socket.id);
   });
 });

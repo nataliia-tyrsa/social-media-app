@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import Post from "../models/postModel";
 import { IUser } from "../models/userModel";
 import mongoose from "mongoose";
+import { createNotification } from "./notificationController";
 
 export const likePost = async (
   req: Request,
@@ -20,7 +21,7 @@ export const likePost = async (
       return;
     }
 
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId).populate('author', '_id');
 
     if (!post) {
       res.status(404).json({ message: "Post not found" });
@@ -37,6 +38,16 @@ export const likePost = async (
       );
     } else {
       post.likes.push(user._id);
+      
+      // Create notification for post author (only when liking, not unliking)
+      if (post.author && post.author._id.toString() !== user._id.toString()) {
+        await createNotification(
+          post.author._id,
+          user._id,
+          "like",
+          post._id as string
+        );
+      }
     }
 
     await post.save();

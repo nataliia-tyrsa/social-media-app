@@ -7,10 +7,12 @@ import {
   MessageCircle, 
   PlusSquare, 
   LogOut,
-  Compass
+  Compass,
+  User
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import { usersApi, notificationsApi, messagesApi } from '../../services/api';
+import { UserAvatar } from '../../utils/userAvatar';
 import logo from '../../assets/logo.svg';
 import styles from './Sidebar.module.css';
 
@@ -52,24 +54,28 @@ const Sidebar: React.FC = () => {
     notifications: 0,
     messages: 0
   });
+  const [lastUnreadMessageUser, setLastUnreadMessageUser] = useState<{ userId: string; username: string } | null>(null);
 
-  // Real data fetching for notifications and messages
   useEffect(() => {
     const fetchNotificationsAndMessages = async () => {
       if (!currentUser) return;
       
       try {
-        const [realNotifications, unreadNotificationsCount, unreadMessagesCount] = await Promise.all([
+        const [realNotifications, unreadMessagesCount, lastUnreadMessage] = await Promise.all([
           notificationsApi.getNotifications().catch(() => []),
-          notificationsApi.getUnreadCount().catch(() => 0),
-          messagesApi.getUnreadCount().catch(() => 0)
+          messagesApi.getUnreadCount().catch(() => 0),
+          messagesApi.getLastUnreadMessage().catch(() => null)
         ]);
         
         setNotifications(realNotifications);
+        const unreadNotificationsCount = realNotifications.filter((n: any) => !n.read).length;
+        
         setUnreadCounts({
           notifications: unreadNotificationsCount,
           messages: unreadMessagesCount
         });
+        
+        setLastUnreadMessageUser(lastUnreadMessage);
       } catch (error) {
         console.error('Error fetching notifications/messages:', error);
         setNotifications([]);
@@ -77,6 +83,7 @@ const Sidebar: React.FC = () => {
           notifications: 0,
           messages: 0
         });
+        setLastUnreadMessageUser(null);
       }
     };
 
@@ -84,10 +91,19 @@ const Sidebar: React.FC = () => {
     
     const interval = setInterval(fetchNotificationsAndMessages, 30000);
     
-    return () => clearInterval(interval);
+    // Listen for messages read event
+    const handleMessagesRead = () => {
+      fetchNotificationsAndMessages();
+    };
+    
+    window.addEventListener('messagesRead', handleMessagesRead);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('messagesRead', handleMessagesRead);
+    };
   }, [currentUser]);
 
-  // Search functionality
   useEffect(() => {
     const searchUsers = async () => {
       if (searchQuery.trim()) {
@@ -107,12 +123,10 @@ const Sidebar: React.FC = () => {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery]);
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
       
-      // Check if click is outside sidebar and dropdowns
       if (activeDropdown && 
           !target.closest(`.${styles.sidebar}`) && 
           !target.closest(`.${styles.dropdownSidebar}`)) {
@@ -126,12 +140,34 @@ const Sidebar: React.FC = () => {
     }
   }, [activeDropdown]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 768 && activeDropdown) {
+        setActiveDropdown(null);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [activeDropdown]);
+
+  useEffect(() => {
+    setActiveDropdown(null);
+  }, [location.pathname]);
+
   const handleDropdownToggle = (dropdown: 'search' | 'notifications') => {
+    if (window.innerWidth <= 768) {
+      if (dropdown === 'search') {
+        navigate('/search');
+      } else if (dropdown === 'notifications') {
+        navigate('/notifications');
+      }
+      return;
+    }
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
   };
 
   const handleNavClick = () => {
-    // Close any open dropdowns when navigating
     setActiveDropdown(null);
   };
 
@@ -167,8 +203,16 @@ const Sidebar: React.FC = () => {
     setActiveDropdown(null);
   };
 
+  const handleMessagesClick = () => {
+    if (lastUnreadMessageUser && unreadCounts.messages > 0) {
+      navigate('/messages', { state: { userId: lastUnreadMessageUser.userId } });
+    } else {
+      navigate('/messages');
+    }
+  };
+
   const handleLogout = () => {
-    setActiveDropdown(null); // Close any open dropdowns
+    setActiveDropdown(null);
     setShowLogoutConfirm(true);
   };
 
@@ -217,6 +261,16 @@ const Sidebar: React.FC = () => {
     { path: '/create', icon: PlusSquare, label: 'Create' },
   ];
 
+  const mobileNavItems = [
+    { path: '/', icon: Home, label: 'Home' },
+    { path: '/search', icon: Search, label: 'Search' },
+    { path: '/explore', icon: Compass, label: 'Explore' },
+    { path: '/notifications', icon: Heart, label: 'Notifications' },
+    { path: '/messages', icon: MessageCircle, label: 'Messages' },
+    { path: '/create', icon: PlusSquare, label: 'Create' },
+    { path: '/profile', icon: User, label: 'Profile' },
+  ];
+
   return (
     <>
       <nav className={styles.sidebar}>
@@ -225,51 +279,115 @@ const Sidebar: React.FC = () => {
         </Link>
         
         <div className={styles.nav}>
-          {navItems.map(({ path, icon: Icon, label }) => (
-            <div key={path} className={styles.navItemWrapper}>
-              {path === '/search' ? (
-                <button
-                  onClick={() => handleDropdownToggle('search')}
-                  className={`${styles.navItem} ${activeDropdown === 'search' ? styles.active : ''}`}
-                >
-                  <Icon className={styles.icon} />
-                  <span className={styles.navText}>{label}</span>
-                </button>
-              ) : path === '/notifications' ? (
-                <button
-                  onClick={() => handleDropdownToggle('notifications')}
-                  className={`${styles.navItem} ${activeDropdown === 'notifications' ? styles.active : ''}`}
-                >
-                  <Icon className={styles.icon} />
-                  <span className={styles.navText}>{label}</span>
-                  {unreadCounts.notifications > 0 && (
-                    <span className={styles.badge}>{unreadCounts.notifications}</span>
-                  )}
-                </button>
-              ) : path === '/messages' ? (
-                <Link
-                  to={path}
-                  className={`${styles.navItem} ${location.pathname === path ? styles.active : ''}`}
-                  onClick={handleNavClick}
-                >
-                  <Icon className={styles.icon} />
-                  <span className={styles.navText}>{label}</span>
-                  {unreadCounts.messages > 0 && (
-                    <span className={styles.badge}>{unreadCounts.messages}</span>
-                  )}
-                </Link>
-              ) : (
-                <Link
-                  to={path}
-                  className={`${styles.navItem} ${location.pathname === path ? styles.active : ''}`}
-                  onClick={handleNavClick}
-                >
-                  <Icon className={styles.icon} />
-                  <span className={styles.navText}>{label}</span>
-                </Link>
-              )}
-            </div>
-          ))}
+          <div className={styles.desktopNav}>
+            {navItems.map(({ path, icon: Icon, label }) => (
+              <div key={path} className={styles.navItemWrapper}>
+                {path === '/search' ? (
+                  <button
+                    onClick={() => handleDropdownToggle('search')}
+                    className={`${styles.navItem} ${activeDropdown === 'search' ? styles.active : ''}`}
+                  >
+                    <Icon className={styles.icon} />
+                    <span className={styles.navText}>{label}</span>
+                  </button>
+                ) : path === '/notifications' ? (
+                  <button
+                    onClick={() => handleDropdownToggle('notifications')}
+                    className={`${styles.navItem} ${activeDropdown === 'notifications' ? styles.active : ''}`}
+                  >
+                    <Icon className={styles.icon} />
+                    <span className={styles.navText}>{label}</span>
+                    {unreadCounts.notifications > 0 && (
+                      <span className={styles.badge}>{unreadCounts.notifications}</span>
+                    )}
+                  </button>
+                ) : path === '/messages' ? (
+                  <button
+                    onClick={handleMessagesClick}
+                    className={`${styles.navItem} ${location.pathname === path ? styles.active : ''}`}
+                  >
+                    <Icon className={styles.icon} />
+                    <span className={styles.navText}>{label}</span>
+                    {unreadCounts.messages > 0 && (
+                      <span className={styles.badge}>{unreadCounts.messages}</span>
+                    )}
+                  </button>
+                ) : (
+                  <Link
+                    to={path}
+                    className={`${styles.navItem} ${location.pathname === path ? styles.active : ''}`}
+                    onClick={handleNavClick}
+                  >
+                    <Icon className={styles.icon} />
+                    <span className={styles.navText}>{label}</span>
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className={styles.mobileNav}>
+            {mobileNavItems.map(({ path, icon: Icon, label }) => (
+              <div key={path} className={styles.navItemWrapper}>
+                {path === '/search' ? (
+                  <button
+                    onClick={() => handleDropdownToggle('search')}
+                    className={`${styles.navItem} ${activeDropdown === 'search' ? styles.active : ''}`}
+                  >
+                    <Icon className={styles.icon} />
+                    <span className={styles.navText}>{label}</span>
+                  </button>
+                ) : path === '/notifications' ? (
+                  <button
+                    onClick={() => handleDropdownToggle('notifications')}
+                    className={`${styles.navItem} ${activeDropdown === 'notifications' ? styles.active : ''}`}
+                  >
+                    <Icon className={styles.icon} />
+                    <span className={styles.navText}>{label}</span>
+                    {unreadCounts.notifications > 0 && (
+                      <span className={styles.badge}>{unreadCounts.notifications}</span>
+                    )}
+                  </button>
+                ) : path === '/messages' ? (
+                  <button
+                    onClick={handleMessagesClick}
+                    className={`${styles.navItem} ${location.pathname === path ? styles.active : ''}`}
+                  >
+                    <Icon className={styles.icon} />
+                    <span className={styles.navText}>{label}</span>
+                    {unreadCounts.messages > 0 && (
+                      <span className={styles.badge}>{unreadCounts.messages}</span>
+                    )}
+                  </button>
+                ) : path === '/profile' ? (
+                  <Link
+                    to={path}
+                    className={`${styles.navItem} ${location.pathname === path ? styles.active : ''}`}
+                    onClick={handleNavClick}
+                  >
+                    <UserAvatar
+                      key={currentUser?.avatarUrl || 'no-avatar'}
+                      avatarUrl={currentUser?.avatarUrl}
+                      username={currentUser?.username}
+                      userId={currentUser?._id}
+                      size={24}
+                      className={styles.profileAvatar}
+                    />
+                    <span className={styles.navText}>{label}</span>
+                  </Link>
+                ) : (
+                  <Link
+                    to={path}
+                    className={`${styles.navItem} ${location.pathname === path ? styles.active : ''}`}
+                    onClick={handleNavClick}
+                  >
+                    <Icon className={styles.icon} />
+                    <span className={styles.navText}>{label}</span>
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className={styles.profileSection}>
@@ -278,9 +396,12 @@ const Sidebar: React.FC = () => {
             className={`${styles.profileItem} ${location.pathname === '/profile' ? styles.active : ''}`}
             onClick={handleNavClick}
           >
-            <img 
-              src={currentUser?.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'} 
-              alt="profile" 
+            <UserAvatar
+              key={currentUser?.avatarUrl || 'no-avatar-profile'}
+              avatarUrl={currentUser?.avatarUrl}
+              username={currentUser?.username}
+              userId={currentUser?._id}
+              size={24}
               className={styles.profileAvatar}
             />
             <span className={styles.navText}>Profile</span>
@@ -293,9 +414,10 @@ const Sidebar: React.FC = () => {
             <span className={styles.navText}>Logout</span>
           </button>
         </div>
+
+
       </nav>
 
-      {/* Search Dropdown */}
       <div className={`${styles.dropdownSidebar} ${activeDropdown === 'search' ? styles.open : ''}`}>
         <div className={styles.dropdownHeader}>
           <h3>Search</h3>
@@ -317,9 +439,11 @@ const Sidebar: React.FC = () => {
                 onClick={() => handleUserClick(user._id)}
                 className={styles.userItem}
               >
-                <img
-                  src={user.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'}
-                  alt={user.username}
+                <UserAvatar
+                  avatarUrl={user.avatarUrl}
+                  username={user.username}
+                  userId={user._id}
+                  size={40}
                   className={styles.userAvatar}
                 />
                 <div className={styles.userInfo}>
@@ -337,7 +461,6 @@ const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* Notifications Dropdown */}
       <div className={`${styles.dropdownSidebar} ${activeDropdown === 'notifications' ? styles.open : ''}`}>
         <div className={styles.dropdownHeader}>
           <h3>Notifications</h3>
@@ -349,9 +472,11 @@ const Sidebar: React.FC = () => {
               onClick={() => handleNotificationClick(notification)}
               className={`${styles.notificationItem} ${!notification.read ? styles.unread : ''}`}
             >
-              <img
-                src={notification.from.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'}
-                alt={notification.from.username}
+              <UserAvatar
+                avatarUrl={notification.from.avatarUrl}
+                username={notification.from.username}
+                userId={notification.from._id}
+                size={40}
                 className={styles.userAvatar}
               />
               <div className={styles.notificationContent}>
@@ -379,18 +504,17 @@ const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* Logout Confirmation */}
       {showLogoutConfirm && (
         <div className={styles.confirmOverlay}>
           <div className={styles.confirmDialog}>
-            <h3>Logout Confirmation</h3>
+            <h3>Logout</h3>
             <p>Are you sure you want to logout?</p>
             <div className={styles.confirmButtons}>
-              <button onClick={confirmLogout} className={styles.confirmButton}>
-                Yes, Logout
-              </button>
               <button onClick={cancelLogout} className={styles.cancelButton}>
                 Cancel
+              </button>
+              <button onClick={confirmLogout} className={styles.confirmButton}>
+                Logout
               </button>
             </div>
           </div>

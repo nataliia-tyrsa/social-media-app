@@ -27,8 +27,9 @@ const postSchema = new Schema<IPost>(
     },
     content: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
+      default: '',
     },
     image: {
       type: String,

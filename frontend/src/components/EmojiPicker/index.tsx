@@ -1,51 +1,76 @@
-import { useState } from 'react';
-import styles from './EmojiPicker.module.css';
+import React, { useEffect, useRef } from 'react';
+import './EmojiPicker.css';
 
 interface EmojiPickerProps {
+  isOpen: boolean;
   onEmojiSelect: (emoji: string) => void;
-  isOpen?: boolean;
-  onClose?: () => void;
+  onClose: () => void;
+  autoClose?: boolean;
 }
 
-const emojis = [
-  '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
-  '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
-  '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
-  '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
-  '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬',
-  '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗',
-  '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯',
-  '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐',
-  '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈',
-  '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉',
-  '👆', '🖕', '👇', '☝️', '👋', '🤚', '🖐️', '✋', '🖖', '👏',
-  '🙌', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦾', '🦿',
-  '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
-  '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '🔥', '⭐'
-];
+const EmojiPicker: React.FC<EmojiPickerProps> = ({ isOpen, onEmojiSelect, onClose, autoClose = true }) => {
+  const pickerRef = useRef<HTMLDivElement>(null);
 
-const EmojiPicker = ({ onEmojiSelect, isOpen = true, onClose }: EmojiPickerProps) => {
+  const emojis = [
+    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+    '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+    '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩',
+    '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣',
+    '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬',
+    '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗',
+    '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯',
+    '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐',
+    '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈',
+    '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾',
+    '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿',
+    '😾', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎',
+    '💔', '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟',
+    '👍', '👎', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙',
+    '👈', '👉', '👆', '🖕', '👇', '☝️', '👋', '🤚', '🖐️', '✋',
+    '🖖', '👏', '🙌', '🤝', '🙏', '✊', '👊', '🤛', '🤜', '💪'
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
   return (
-    <div className={styles.picker}>
-      <div className={styles.header}>
-        <span>Choose emoji</span>
-        {onClose && (
-          <button type="button" onClick={onClose} className={styles.closeButton}>×</button>
-        )}
-      </div>
-      <div className={styles.emojiGrid}>
-        {emojis.map((emoji, index) => (
-          <button
-            key={index}
-            type="button"
-            className={styles.emojiButton}
-            onClick={() => {
-              onEmojiSelect(emoji);
-            }}
-          >
-            {emoji}
-          </button>
-        ))}
+    <div className="emoji-picker-overlay">
+      <div className="emoji-picker" ref={pickerRef}>
+        <div className="emoji-picker-header">
+          <span>Emojis</span>
+          <button className="emoji-picker-close" onClick={onClose}>×</button>
+        </div>
+        <div className="emoji-picker-grid">
+          {emojis.map((emoji, index) => (
+            <button
+              key={index}
+              className="emoji-item"
+              onClick={() => {
+                onEmojiSelect(emoji);
+                if (autoClose) {
+                  onClose();
+                }
+              }}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

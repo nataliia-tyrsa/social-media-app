@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.get("/", protect, getAllUsers);
 router.get("/search", protect, searchUsers);
-router.get("/:userId", protect, getUserById);
+router.get("/:id", protect, getUserById);
 router.post("/:userId/follow", protect, toggleFollow);
 router.put("/profile", protect, updateProfile);
 

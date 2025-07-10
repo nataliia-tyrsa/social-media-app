@@ -4,6 +4,7 @@ export interface IMessage extends Document {
   from: Types.ObjectId;
   to: Types.ObjectId;
   text: string;
+  isRead: boolean;
 }
 
 const messageSchema = new Schema<IMessage>(
@@ -22,6 +23,10 @@ const messageSchema = new Schema<IMessage>(
       type: String,
       required: true,
       trim: true,
+    },
+    isRead: {
+      type: Boolean,
+      default: false,
     },
   },
   {

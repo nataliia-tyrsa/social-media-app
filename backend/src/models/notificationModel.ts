@@ -44,7 +44,7 @@ const notificationSchema = new Schema<INotification>(
   }
 );
 
-notificationSchema.virtual("message").get(function (this: INotification) {
+notificationSchema.virtual("messageText").get(function (this: INotification) {
   switch (this.type) {
     case "like":
       return "liked your post";

@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import Login from './pages/Login/index';
 import Register from './pages/Register/index';
 import ResetPassword from './pages/ResetPassword/index';
+import ResetPasswordConfirm from './pages/ResetPasswordConfirm/index';
 import Feed from './pages/Feed/index';
 import Profile from './pages/Profile/index';
 import Messages from './pages/Chat/index'; 
@@ -51,6 +52,12 @@ function App() {
     }
   }, [isAuthChecked]);
 
+  useEffect(() => {
+    localStorage.removeItem('theme-bg-color');
+    localStorage.removeItem('theme-bg-image');
+    document.body.style.backgroundImage = 'none';
+    document.body.style.backgroundColor = '#ffffff';
+  }, []);
 
   if (!isAuthChecked) {
     return (
@@ -69,16 +76,15 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* If not logged in, show login/register */}
         {!isLoggedIn ? (
           <>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/reset" element={<ResetPassword />} />
+            <Route path="/reset-password-confirm" element={<ResetPasswordConfirm />} />
             <Route path="*" element={<Navigate to="/login" replace />} />
           </>
         ) : (
-          /* If logged in, show app routes */
           <>
             <Route path="/" element={<Layout />}>
               <Route index element={<Feed />} />

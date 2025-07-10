@@ -2,7 +2,8 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { postsApi, uploadApi } from '../../services/api';
 import useAuthStore from '../../store/authStore';
-import styles from './Create.module.css';
+import { UserAvatar } from '../../utils/userAvatar';
+import styles from '../../components/CreatePostModal/CreatePostModal.module.css';
 
 const Create = () => {
   const navigate = useNavigate();
@@ -43,8 +44,8 @@ const Create = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedImage) {
-      setError('Please select an image');
+    if (!selectedImage && !content.trim()) {
+      setError('Please add an image or caption');
       return;
     }
 
@@ -60,8 +61,8 @@ const Create = () => {
         console.log('Image uploaded successfully:', imageUrl);
       }
 
-      const postContent = content.trim();
-      console.log('Creating post with content:', postContent, 'and image:', imageUrl);
+      const postContent = content.trim() || '';
+      console.log('Creating post with content:', JSON.stringify(postContent), 'and image:', imageUrl);
       await postsApi.createPost(postContent, imageUrl);
       navigate('/');
     } catch (error: any) {
@@ -91,17 +92,26 @@ const Create = () => {
   };
 
   if (!currentUser) {
-    return <div className={styles.container}>Please log in to create posts</div>;
+    return <div className={styles.modal}>Please log in to create posts</div>;
   }
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h1>Create new post</h1>
-      </div>
+  const isMobile = window.innerWidth <= 768;
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.imageSection}>
+  return (
+    <div className={styles.modal} style={{ margin: '40px auto', maxWidth: 900 }}>
+      <form onSubmit={handleSubmit} 
+        style={{ 
+          display: 'flex', 
+          flex: 1, 
+          minHeight: 500, 
+          flexDirection: isMobile ? 'column' : 'row' 
+        }}
+      >
+        <div className={styles.leftSection} style={{ 
+          minHeight: isMobile ? 300 : 200, 
+          width: isMobile ? '100%' : undefined,
+          order: isMobile ? 1 : 0
+        }}>
           {imagePreview ? (
             <div className={styles.imagePreview}>
               <img src={imagePreview} alt="Preview" />
@@ -123,7 +133,6 @@ const Create = () => {
               <small>Max 20MB, JPG/PNG/GIF/WEBP</small>
             </div>
           )}
-          
           <input
             type="file"
             ref={fileInputRef}
@@ -132,39 +141,70 @@ const Create = () => {
             hidden
           />
         </div>
-
-        <div className={styles.contentSection}>
-          <div className={styles.userInfo}>
-            <img
-              src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'}
-              alt="avatar"
-              className={styles.avatar}
-            />
-            <span className={styles.username}>{currentUser.username}</span>
+        <div className={styles.rightSection} style={{ 
+          width: isMobile ? '100%' : 340,
+          order: isMobile ? 2 : 0,
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          {isMobile && (
+            <>
+              <textarea
+                value={content || ''}
+                onChange={(e) => setContent(e.target.value || '')}
+                placeholder="Write a caption..."
+                className={styles.caption}
+                maxLength={2200}
+                style={{ marginBottom: 16, minHeight: 120 }}
+              />
+              <div className={styles.charCount} style={{ marginBottom: 16 }}>
+                {(content || '').length}/2,200
+              </div>
+            </>
+          )}
+          <div className={styles.header} style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between', 
+            border: 'none', 
+            padding: isMobile ? '16px 0 0 0' : '16px 0', 
+            background: 'none',
+            marginTop: isMobile ? 'auto' : 0
+          }}>
+            <div className={styles.userInfo} style={{ margin: 0, padding: 0, border: 'none' }}>
+              <UserAvatar
+                avatarUrl={currentUser.avatarUrl}
+                username={currentUser.username}
+                userId={currentUser._id}
+                size={32}
+                className={styles.avatar}
+              />
+              <span className={styles.username}>{currentUser.username}</span>
+            </div>
+            <button 
+              type="submit" 
+              className={styles.shareButton}
+              disabled={loading || (!selectedImage && !content.trim())}
+            >
+              {loading ? 'Sharing...' : 'Share'}
+            </button>
           </div>
-          
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Write a caption..."
-            className={styles.caption}
-            maxLength={500}
-          />
-          
-          <div className={styles.charCount}>
-            {content.length}/500
-          </div>
+          {!isMobile && (
+            <>
+              <textarea
+                value={content || ''}
+                onChange={(e) => setContent(e.target.value || '')}
+                placeholder="Write a caption..."
+                className={styles.caption}
+                maxLength={2200}
+              />
+              <div className={styles.charCount} style={{ marginTop: 8 }}>
+                {(content || '').length}/2,200
+              </div>
+            </>
+          )}
+          {error && <div className={styles.error}>{error}</div>}
         </div>
-
-        {error && <div className={styles.error}>{error}</div>}
-
-        <button 
-          type="submit" 
-          className={styles.shareButton}
-          disabled={loading || !selectedImage}
-        >
-          {loading ? 'Sharing...' : 'Share'}
-        </button>
       </form>
     </div>
   );

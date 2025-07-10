@@ -1,15 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { usersApi, postsApi, commentsApi, Post, User } from "../../services/api";
+import { MessageCircle } from "lucide-react";
+import { usersApi, postsApi, commentsApi, uploadApi, Post, User } from "../../services/api";
 import useAuthStore from "../../store/authStore";
 import PostModal from "../../components/PostModal";
 import CreatePostModal from "../../components/CreatePostModal";
+import { timeAgo } from '../../utils/timeAgo';
+import { UserAvatar } from '../../utils/userAvatar';
+
 import styles from "./Profile.module.css";
 
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
   const currentUser = useAuthStore(state => state.user);
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -44,27 +49,39 @@ export default function Profile() {
     console.log('loadUserData called with userId:', userId, 'isOwnProfile:', isOwnProfile);
     try {
       setError('');
+      setLoading(true);
       
       if (isOwnProfile && currentUser) {
         console.log('Using currentUser for own profile:', currentUser);
         setUser(currentUser);
       } else if (userId) {
         console.log('Fetching user by ID:', userId);
-        const userData = await usersApi.getUserById(userId);
-        console.log('Fetched user data:', userData);
-        setUser(userData);
-        setIsFollowing(userData.followers?.includes(currentUser?._id || '') || false);
+        try {
+          const userData = await usersApi.getUserById(userId);
+          console.log('Fetched user data:', userData);
+          setUser(userData);
+          setIsFollowing(userData.followers?.includes(currentUser?._id || '') || false);
+        } catch (userError) {
+          console.error('Error fetching user by ID:', userError);
+          throw userError;
+        }
       }
 
       if (userId) {
         console.log('Fetching posts for user:', userId);
-        const userPosts = await postsApi.getUserPosts(userId);
-        console.log('Fetched posts:', userPosts);
-        setPosts(userPosts);
+        try {
+          const userPosts = await postsApi.getUserPosts(userId);
+          console.log('Fetched posts:', userPosts);
+          setPosts(userPosts);
+        } catch (postsError) {
+          console.error('Error fetching posts:', postsError);
+          // Don't throw here, just log the error
+          setPosts([]);
+        }
       }
     } catch (error) {
       console.error('Error loading user data:', error);
-      setError('Failed to load user data');
+      setError(`Failed to load user data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -89,6 +106,12 @@ export default function Profile() {
       }
     } catch (error) {
       console.error('Error following/unfollowing user:', error);
+    }
+  };
+
+  const handleMessage = () => {
+    if (!isOwnProfile && userId) {
+      navigate('/messages', { state: { userId } });
     }
   };
 
@@ -158,7 +181,7 @@ export default function Profile() {
 
   const handleAvatarClick = () => {
     if (isOwnProfile) {
-      navigate('/edit-profile');
+      fileInputRef.current?.click();
     }
   };
 
@@ -166,6 +189,52 @@ export default function Profile() {
     if (userId) {
       const userPosts = await postsApi.getUserPosts(userId);
       setPosts(userPosts);
+    }
+  };
+
+  const handlePostUpdated = (updatedPost: Post) => {
+    setPosts(prevPosts => 
+      prevPosts.map(post => 
+        post._id === updatedPost._id ? updatedPost : post
+      )
+    );
+    setActivePost(updatedPost);
+  };
+
+  const handlePostDeleted = () => {
+    if (activePost) {
+      setPosts(prevPosts => 
+        prevPosts.filter(post => post._id !== activePost._id)
+      );
+      setActivePost(null);
+    }
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !isOwnProfile) return;
+
+    try {
+      // Upload image
+      const uploadResult = await uploadApi.uploadImage(file);
+      
+      // Update profile with new avatar URL
+      const updatedUser = await usersApi.updateProfile({
+        avatarUrl: uploadResult.url
+      });
+      
+      // Update local state
+      setUser(updatedUser);
+      
+      // Update auth store
+      useAuthStore.getState().updateUser(updatedUser);
+      
+      // Force refresh user data to ensure consistency
+      await loadUserData();
+      
+      console.log('Avatar updated successfully:', uploadResult.url);
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
     }
   };
 
@@ -191,46 +260,85 @@ export default function Profile() {
   return (
     <div className={styles.container}>
       <div className={styles.profileHeader}>
-        <div className={styles.avatarWrapper}>
-          <img
-            src={user.avatarUrl || "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face"}
-            alt={`${user.username || 'User'} avatar`}
-            className={styles.avatar}
-            onClick={handleAvatarClick}
-            style={{ cursor: isOwnProfile ? 'pointer' : 'default' }}
-            onError={(e) => {
-              e.currentTarget.src = 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face';
-            }}
-          />
-        </div>
-        <div className={styles.userInfo}>
-          <div className={styles.usernameRow}>
-            <h2>{user.username || 'Unknown User'}</h2>
-            {isOwnProfile ? (
-              <Link to="/edit-profile" className={styles.editButton}>
-                Edit Profile
-              </Link>
-            ) : (
-              <button 
-                onClick={handleFollow}
-                className={`${styles.followButton} ${isFollowing ? styles.following : ''}`}
-                disabled={!currentUser}
+        <div className={styles.avatarSection}>
+          <div className={styles.avatarWrapper}>
+            <UserAvatar
+              key={user.avatarUrl || 'no-avatar'}
+              avatarUrl={user.avatarUrl}
+              username={user.username}
+              userId={user._id}
+              size={150}
+              className={styles.avatar}
+            />
+            {isOwnProfile && (
+              <div 
+                className={styles.avatarOverlay}
+                onClick={handleAvatarClick}
               >
-                {isFollowing ? 'Unfollow' : 'Follow'}
-              </button>
+                <span>Change Photo</span>
+              </div>
             )}
           </div>
-          
-          <div className={styles.stats}>
-            <span><strong>{posts.length}</strong> posts</span>
-            <span><strong>{user.followers?.length || 0}</strong> followers</span>
-            <span><strong>{user.following?.length || 0}</strong> following</span>
+        </div>
+
+        <div className={styles.userInfo}>
+          <div className={styles.actionRow}>
+            <h1 className={styles.username}>{user.username || 'Unknown User'}</h1>
+            
+            <div className={styles.actionButtons}>
+              {isOwnProfile ? (
+                <>
+                  <Link to="/edit-profile" className={styles.primaryButton}>
+                    Edit Profile
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <button 
+                    onClick={handleFollow}
+                    className={`${styles.primaryButton} ${isFollowing ? styles.following : ''}`}
+                    disabled={!currentUser}
+                  >
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                  <button 
+                    onClick={handleMessage}
+                    className={styles.secondaryButton}
+                    disabled={!currentUser}
+                  >
+                    Message
+                  </button>
+                </>
+              )}
+            </div>
+
+            <div className={styles.statsSection}>
+              <div className={styles.stats}>
+                <div className={styles.stat}>
+                  <span className={styles.statNumber}>{posts.length}</span>
+                  <span className={styles.statLabel}>posts</span>
+                </div>
+                <div className={styles.stat}>
+                  <span className={styles.statNumber}>{user.followers?.length || 0}</span>
+                  <span className={styles.statLabel}>followers</span>
+                </div>
+                <div className={styles.stat}>
+                  <span className={styles.statNumber}>{user.following?.length || 0}</span>
+                  <span className={styles.statLabel}>following</span>
+                </div>
+              </div>
+            </div>
           </div>
           
-          <div className={styles.bio}>
-            {user.fullName && <strong>{user.fullName}</strong>}
-            {user.bio && <p>{user.bio}</p>}
-          </div>
+          {user.bio && (
+            <div className={styles.bio}>
+              <div className={styles.bioText}>
+                {user.bio.split('\n').map((line, index) => (
+                  <div key={index}>{line}</div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -276,10 +384,6 @@ export default function Profile() {
                   <p>{post.content}</p>
                 </div>
               )}
-              <div className={styles.postOverlay}>
-                <span>❤️ {post.likes.length}</span>
-                <span>💬 {post.comments.length}</span>
-              </div>
             </div>
           );
         })}
@@ -292,6 +396,8 @@ export default function Profile() {
           onLike={handleLike}
           onComment={handleComment}
           currentUser={currentUser}
+          onPostUpdated={handlePostUpdated}
+          onPostDeleted={handlePostDeleted}
         />
       )}
       
@@ -299,6 +405,14 @@ export default function Profile() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onPostCreated={handlePostCreated}
+      />
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleAvatarUpload}
+        style={{ display: 'none' }}
       />
     </div>
   );

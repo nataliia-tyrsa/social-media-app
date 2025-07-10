@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import Post from "../models/postModel";
 import { IUser } from "../models/userModel";
 
@@ -10,14 +10,14 @@ export const createPost = async (req: Request, res: Response) => {
     
     console.log('Creating post with data:', { content, image, body: req.body });
     
-    if (!content && !image) {
+    if ((!content || content.trim() === '') && (!image || image.trim() === '')) {
       return res.status(400).json({ message: "Content or image is required" });
     }
 
     const newPost = new Post({
       author: user._id,
-      content,
-      image,
+      content: content || '',
+      image: image || '',
       likes: [],
       comments: [],
     });
@@ -51,18 +51,32 @@ export const getAllPosts = async (req: Request, res: Response) => {
   }
 };
 
-export const getPostById = async (req: Request, res: Response) => {
+export const getPostById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
-    const post = await Post.findById(req.params.id)
+    const { postId } = req.params;
+
+    const post = await Post.findById(postId)
       .populate("author", "username fullName avatarUrl")
-      .populate("likes", "username")
-      .populate("comments.author", "username fullName avatarUrl");
+      .populate({
+        path: "comments",
+        populate: {
+          path: "author",
+          select: "username fullName avatarUrl"
+        }
+      });
+
     if (!post) {
-      return res.status(404).json({ message: "Post not found" });
+      res.status(404).json({ message: "Post not found" });
+      return;
     }
+
     res.status(200).json(post);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch post", error: err });
+    next(err);
   }
 };
 

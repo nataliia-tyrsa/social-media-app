@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import User, { IUser } from "../models/userModel";
 import bcrypt from "bcryptjs";
+import { createNotification } from "./notificationController";
 
 export const updateProfile = async (
   req: Request,
@@ -178,6 +179,13 @@ export const toggleFollow = async (
     } else {
       currentUser.following.push(targetUser._id);
       targetUser.followers.push(currentUser._id);
+      
+      // Create notification for the user being followed
+      await createNotification(
+        targetUser._id,
+        currentUser._id,
+        "follow"
+      );
     }
 
     await Promise.all([currentUser.save(), targetUser.save()]);

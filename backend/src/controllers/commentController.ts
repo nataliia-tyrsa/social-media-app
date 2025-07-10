@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import Post from "../models/postModel";
 import { IUser } from "../models/userModel";
 import mongoose from "mongoose";
+import { createNotification } from "./notificationController";
 
 export const addComment = async (
   req: Request,
@@ -11,7 +12,7 @@ export const addComment = async (
   try {
     const { content } = req.body;
     const user = req.user as IUser;
-    const post = await Post.findById(req.params.postId);
+    const post = await Post.findById(req.params.postId).populate('author', '_id');
 
     if (!post) {
       res.status(404).json({ message: "Post not found" });
@@ -39,6 +40,16 @@ export const addComment = async (
     post.comments.push(newComment);
     await post.save();
     await post.populate("comments.author", "username fullName avatarUrl");
+
+    // Create notification for post author (only if not commenting on own post)
+    if (post.author && post.author._id.toString() !== user._id.toString()) {
+      await createNotification(
+        post.author._id,
+        user._id,
+        "comment",
+        post._id as string
+      );
+    }
 
     res.status(200).json(post);
   } catch (err) {

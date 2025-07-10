@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { usersApi, User } from '../../services/api';
+import { UserAvatar } from '../../utils/userAvatar';
 import styles from './SearchPanel.module.css';
 
 interface SearchPanelProps {
@@ -13,6 +14,7 @@ const SearchPanel = ({ isOpen, onClose }: SearchPanelProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   // Load all users once when panel opens
   useEffect(() => {
@@ -33,58 +35,34 @@ const SearchPanel = ({ isOpen, onClose }: SearchPanelProps) => {
     }
   };
 
-  // Filter users based on query with smart matching
-  const filteredUsers = useMemo(() => {
-    if (!query.trim()) {
-      return allUsers.slice(0, 10); // Show first 10 users when no query
-    }
+  // Search users when query changes
+  useEffect(() => {
+    const searchUsers = async () => {
+      if (!query.trim()) {
+        setUsers(allUsers.slice(0, 10)); // Show first 10 users when no query
+        return;
+      }
 
-    const searchTerm = query.toLowerCase().trim();
-    
-    return allUsers
-      .filter(user => {
-        const username = user.username.toLowerCase();
-        const fullName = user.fullName.toLowerCase();
-        
-        // Exact matches first
-        if (username.startsWith(searchTerm) || fullName.startsWith(searchTerm)) {
-          return true;
-        }
-        
-        // Split name parts for matching
-        const nameParts = fullName.split(' ');
-        const usernameMatch = username.includes(searchTerm);
-        const nameMatch = nameParts.some(part => part.startsWith(searchTerm));
-        
-        return usernameMatch || nameMatch;
-      })
-      .sort((a, b) => {
-        const aUsername = a.username.toLowerCase();
-        const aFullName = a.fullName.toLowerCase();
-        const bUsername = b.username.toLowerCase();
-        const bFullName = b.fullName.toLowerCase();
-        
-        // Prioritize exact matches at the beginning
-        const aUsernameStarts = aUsername.startsWith(searchTerm);
-        const bUsernameStarts = bUsername.startsWith(searchTerm);
-        const aNameStarts = aFullName.startsWith(searchTerm);
-        const bNameStarts = bFullName.startsWith(searchTerm);
-        
-        if (aUsernameStarts && !bUsernameStarts) return -1;
-        if (!aUsernameStarts && bUsernameStarts) return 1;
-        if (aNameStarts && !bNameStarts) return -1;
-        if (!aNameStarts && bNameStarts) return 1;
-        
-        // Then alphabetical order
-        return aUsername.localeCompare(bUsername);
-      })
-      .slice(0, 20); // Limit to 20 results
+      setLoading(true);
+      try {
+        const results = await usersApi.searchUsers(query.trim());
+        setUsers(results);
+      } catch (error) {
+        console.error('Error searching users:', error);
+        setUsers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchUsers, 300); // Debounce search
+    return () => clearTimeout(timeoutId);
   }, [query, allUsers]);
 
-  // Update users when filtered results change
-  useEffect(() => {
-    setUsers(filteredUsers);
-  }, [filteredUsers]);
+  const handleUserClick = (userId: string) => {
+    onClose();
+    navigate(`/profile/${userId}`);
+  };
 
   return (
     <div className={`${styles.panel} ${isOpen ? styles.open : styles.closed}`}>
@@ -137,12 +115,17 @@ const SearchPanel = ({ isOpen, onClose }: SearchPanelProps) => {
                   key={user._id} 
                   to={`/profile/${user._id}`} 
                   className={styles.userItem}
-                  onClick={onClose}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleUserClick(user._id);
+                  }}
                 >
-                  <img 
-                    src={user.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'} 
-                    alt="avatar" 
-                    className={styles.avatar} 
+                  <UserAvatar
+                    avatarUrl={user.avatarUrl}
+                    username={user.username}
+                    userId={user._id}
+                    size={48}
+                    className={styles.avatar}
                   />
                   <div className={styles.userInfo}>
                     <span className={styles.username}>{user.username}</span>

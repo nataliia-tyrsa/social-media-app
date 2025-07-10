@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usersApi, uploadApi } from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import { UserAvatar } from '../../utils/userAvatar';
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -36,13 +37,11 @@ const EditProfile = () => {
   const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
         setError('Avatar size must be less than 5MB');
         return;
       }
       
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setError('Please select a valid image file');
         return;
@@ -97,10 +96,18 @@ const EditProfile = () => {
       if (Object.keys(updateData).length > 0) {
         const updatedUser = await usersApi.updateProfile(updateData);
         console.log('Profile update result:', updatedUser);
+        
+        // Update auth store
         updateUser(updatedUser);
         
         // Refresh user data to ensure consistency
         await refreshUser();
+        
+        // Update local form state if avatar was changed
+        if (avatarFile && updatedUser.avatarUrl) {
+          setAvatarPreview(updatedUser.avatarUrl);
+          setAvatarFile(null);
+        }
         
         console.log('Updated user in store:', updatedUser);
         setSuccess('Profile updated successfully!');
@@ -124,7 +131,7 @@ const EditProfile = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value || ''
     }));
   };
 
@@ -138,32 +145,33 @@ const EditProfile = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h2>Edit profile</h2>
-        <button 
-          type="button" 
-          onClick={handleCancel}
-          className={styles.cancelButton}
-        >
-          Cancel
-        </button>
-      </div>
-
       <div className={styles.profile}>
-        <img 
-          src={avatarPreview || "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face"} 
-          alt="avatar" 
-          className={styles.avatar} 
-        />
+        {avatarPreview ? (
+          <img 
+            src={avatarPreview} 
+            alt="avatar" 
+            className={styles.avatar} 
+          />
+        ) : (
+          <UserAvatar
+            avatarUrl={currentUser.avatarUrl}
+            username={currentUser.username}
+            userId={currentUser._id}
+            size={80}
+            className={styles.avatar}
+          />
+        )}
         <div className={styles.info}>
-          <strong>{currentUser.username}</strong>
-          <button 
-            type="button"
-            className={styles.newPhoto}
-            onClick={() => avatarInputRef.current?.click()}
-          >
-            Change photo
-          </button>
+          <div className={styles.nameAndButton}>
+            <strong>{currentUser.username || 'User'}</strong>
+            <button 
+              type="button"
+              className={styles.newPhoto}
+              onClick={() => avatarInputRef.current?.click()}
+            >
+              Change photo
+            </button>
+          </div>
           <input
             type="file"
             ref={avatarInputRef}
@@ -180,7 +188,7 @@ const EditProfile = () => {
           <input 
             type="text" 
             name="fullName"
-            value={formData.fullName} 
+            value={formData.fullName || ''} 
             onChange={handleChange}
             required
             maxLength={50}
@@ -192,7 +200,7 @@ const EditProfile = () => {
           <input 
             type="text" 
             name="username"
-            value={formData.username} 
+            value={formData.username || ''} 
             onChange={handleChange}
             required
             maxLength={30}
@@ -206,33 +214,32 @@ const EditProfile = () => {
           <textarea
             name="bio"
             maxLength={150}
-            value={formData.bio}
+            value={formData.bio || ''}
             onChange={handleChange}
             placeholder="Tell us about yourself..."
             rows={3}
           />
-          <div className={styles.counter}>{formData.bio.length} / 150</div>
+          <div className={styles.counter}>{(formData.bio || '').length} / 150</div>
         </div>
 
         {error && <div className={styles.error}>{error}</div>}
         {success && <div className={styles.success}>{success}</div>}
 
-        <div className={styles.buttons}>
-          <button 
-            type="button" 
-            onClick={handleCancel}
-            className={styles.cancelBtn}
-          >
-            Cancel
-          </button>
-          <button 
-            type="submit" 
-            className={styles.save}
-            disabled={loading}
-          >
-            {loading ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
+        <button 
+          type="submit" 
+          className={styles.save}
+          disabled={loading}
+        >
+          {loading ? 'Saving...' : 'Save Changes'}
+        </button>
+        <button
+          type="button"
+          onClick={handleCancel}
+          className={styles.save}
+          style={{ marginTop: 12, background: '#fff', color: '#0095f6', border: '1px solid #0095f6' }}
+        >
+          Cancel
+        </button>
       </form>
     </div>
   );

@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
-import { Upload, Smile } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { postsApi, uploadApi } from '../../services/api';
 import useAuthStore from '../../store/authStore';
 import EmojiPicker from '../EmojiPicker';
+import { UserAvatar } from '../../utils/userAvatar';
 import styles from './CreatePostModal.module.css';
 
 interface CreatePostModalProps {
@@ -64,7 +65,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
         imageUrl = uploadResult.url;
       }
 
-      await postsApi.createPost(content.trim(), imageUrl);
+      const postContent = content.trim() || '';
+      console.log('Creating post with content:', postContent, 'and image:', imageUrl);
+      await postsApi.createPost(postContent, imageUrl);
       
       handleClose();
       if (onPostCreated) {
@@ -94,8 +97,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
   };
 
   const handleEmojiSelect = (emoji: string) => {
-    setContent(prev => prev + emoji);
-    setShowEmojiPicker(false);
+    setContent(prev => (prev || '') + emoji);
   };
 
   if (!isOpen || !currentUser) return null;
@@ -104,7 +106,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
     <div className={styles.overlay} onClick={handleClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
-          <h2>Create new post</h2>
+          <div></div>
           <button 
             onClick={handleSubmit}
             disabled={loading || (!selectedImage && !content.trim())}
@@ -154,17 +156,19 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
 
           <div className={styles.rightSection}>
             <div className={styles.userInfo}>
-              <img
-                src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'}
-                alt="avatar"
+              <UserAvatar
+                avatarUrl={currentUser.avatarUrl}
+                username={currentUser.username}
+                userId={currentUser._id}
+                size={32}
                 className={styles.avatar}
               />
               <span className={styles.username}>{currentUser.username}</span>
             </div>
             
             <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+              value={content || ''}
+              onChange={(e) => setContent(e.target.value || '')}
               placeholder="Write a caption..."
               className={styles.caption}
               maxLength={2200}
@@ -176,17 +180,41 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onPo
                 className={styles.emojiButton}
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               >
-                <Smile />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                  <line x1="9" y1="9" x2="9.01" y2="9"/>
+                  <line x1="15" y1="9" x2="15.01" y2="9"/>
+                </svg>
               </button>
               <span className={styles.charCount}>
-                {content.length}/2,200
+                {(content || '').length}/2,200
               </span>
             </div>
 
             {showEmojiPicker && (
-              <div className={styles.emojiPickerWrapper}>
-                <EmojiPicker onEmojiSelect={handleEmojiSelect} />
-              </div>
+              <>
+                <div 
+                  className={styles.emojiOverlay}
+                  onClick={() => setShowEmojiPicker(false)}
+                />
+                <div className={styles.emojiPickerWrapper}>
+                  <EmojiPicker 
+                    isOpen={true}
+                    onEmojiSelect={handleEmojiSelect}
+                    onClose={() => setShowEmojiPicker(false)}
+                    autoClose={false}
+                  />
+                </div>
+              </>
             )}
 
             {error && <div className={styles.error}>{error}</div>}

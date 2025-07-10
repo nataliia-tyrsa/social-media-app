@@ -16,7 +16,11 @@ const Register = () => {
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: value || '' 
+    }));
     setError('');
   };
 
@@ -48,33 +52,37 @@ const Register = () => {
             type="email"
             name="email"
             placeholder="Email"
-            value={formData.email}
+            value={formData.email || ''}
             onChange={handleChange}
             required
+            className={styles.registerInput}
           />
           <input
             type="text"
             name="fullName"
             placeholder="Full Name"
-            value={formData.fullName}
+            value={formData.fullName || ''}
             onChange={handleChange}
             required
+            className={styles.registerInput}
           />
           <input
             type="text"
             name="username"
             placeholder="Username"
-            value={formData.username}
+            value={formData.username || ''}
             onChange={handleChange}
             required
+            className={styles.registerInput}
           />
           <input
             type="password"
             name="password"
             placeholder="Password"
-            value={formData.password}
+            value={formData.password || ''}
             onChange={handleChange}
             required
+            className={styles.registerInput}
           />
 
           {error && <p className={styles.registerError}>{error}</p>}

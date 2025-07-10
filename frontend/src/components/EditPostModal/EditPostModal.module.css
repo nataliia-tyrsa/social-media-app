@@ -1,0 +1,340 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  max-width: 1080px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #dbdbdb;
+  background: white;
+}
+
+.header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #262626;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #8e8e8e;
+  transition: color 0.2s ease;
+}
+
+.closeButton:hover {
+  color: #262626;
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  min-height: 600px;
+}
+
+.leftSection {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+  border-right: 1px solid #dbdbdb;
+  position: relative;
+}
+
+.uploadArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  cursor: pointer;
+  text-align: center;
+  height: 100%;
+  width: 100%;
+}
+
+.uploadIcon {
+  color: #8e8e8e;
+  margin-bottom: 24px;
+  font-size: 48px;
+}
+
+.uploadArea p {
+  font-size: 22px;
+  font-weight: 300;
+  color: #262626;
+  margin: 0 0 24px 0;
+}
+
+.uploadArea small {
+  color: #8e8e8e;
+  font-size: 14px;
+}
+
+.imagePreview {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imagePreview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.removeImage {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background-color 0.2s ease;
+}
+
+.removeImage:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.rightSection {
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  padding: 20px;
+}
+
+.caption {
+  flex: 1;
+  resize: none;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  font-family: inherit;
+  color: #262626;
+  background: transparent;
+  min-height: 168px;
+  margin-bottom: 20px;
+}
+
+.caption::placeholder {
+  color: #8e8e8e;
+}
+
+.charCount {
+  font-size: 12px;
+  color: #8e8e8e;
+  margin-bottom: 20px;
+  text-align: right;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.updateButton {
+  background: #0095f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.updateButton:hover:not(:disabled) {
+  background: #1877f2;
+}
+
+.updateButton:disabled {
+  background: #b3d9ff;
+  cursor: not-allowed;
+}
+
+.deleteButton {
+  background: #ed4956;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background: #d63447;
+}
+
+.deleteButton:disabled {
+  background: #f5a3aa;
+  cursor: not-allowed;
+}
+
+.error {
+  background: #ed4956;
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.confirmOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.confirmDialog {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 300px;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.confirmDialog h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #262626;
+}
+
+.confirmDialog p {
+  margin: 0 0 20px;
+  color: #8e8e8e;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.confirmButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.cancelButton {
+  background: #f5f5f5;
+  color: #262626;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: #e0e0e0;
+}
+
+.confirmDeleteButton {
+  background: #ed4956;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.confirmDeleteButton:hover:not(:disabled) {
+  background: #d63447;
+}
+
+.confirmDeleteButton:disabled {
+  background: #f5a3aa;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .modal {
+    flex-direction: column;
+    max-height: 95vh;
+    margin: 10px;
+  }
+  
+  .content {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .leftSection {
+    border-right: none;
+    border-bottom: 1px solid #dbdbdb;
+    min-height: 300px;
+  }
+  
+  .rightSection {
+    width: 100%;
+  }
+  
+  .uploadArea {
+    padding: 30px 20px;
+  }
+  
+  .uploadArea p {
+    font-size: 18px;
+  }
+} 

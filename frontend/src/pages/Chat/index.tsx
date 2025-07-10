@@ -1,24 +1,58 @@
 import React, { useEffect, useState, ChangeEvent, KeyboardEvent, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { io, Socket } from 'socket.io-client';
 import { usersApi, messagesApi, User, Message } from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import { UserAvatar } from '../../utils/userAvatar';
+import EmojiPicker from '../../components/EmojiPicker';
 import './Chat.css';
 
 const Chat = () => {
   const currentUser = useAuthStore(state => state.user);
   const token = useAuthStore(state => state.token);
+  const navigate = useNavigate();
+  const location = useLocation();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [usersWithNewMessages, setUsersWithNewMessages] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [sending, setSending] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const selectedUserRef = useRef<User | null>(null);
+
+  // Check if we need to open a specific user's chat from navigation state
+  useEffect(() => {
+    if (location.state?.userId && users.length > 0) {
+      const userToSelect = users.find(user => user._id === location.state.userId);
+      if (userToSelect) {
+        setSelectedUser(userToSelect);
+        setMessages([]);
+        setError('');
+        
+        // Remove user from new messages list
+        setUsersWithNewMessages(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(userToSelect._id);
+          return newSet;
+        });
+        
+        // Load messages for this user
+        loadMessagesForUser(userToSelect);
+        
+        // Clear the navigation state
+        navigate('/messages', { replace: true, state: {} });
+      }
+    }
+  }, [location.state, users, navigate]);
 
   useEffect(() => {
     if (token && currentUser) {
-      // Initialize socket connection
       const newSocket = io('http://localhost:3000', {
         auth: {
           token: token
@@ -27,11 +61,21 @@ const Chat = () => {
 
       newSocket.on('connect', () => {
         console.log('Connected to socket server');
+        newSocket.emit('user_connected', currentUser._id);
       });
 
       newSocket.on('chat message', (msg: any) => {
-        if (selectedUser && (msg.from._id === selectedUser._id || msg.to._id === selectedUser._id)) {
-          setMessages(prev => [...prev, msg]);
+        const currentSelectedUser = selectedUserRef.current;
+        
+        if (msg.to._id === currentUser._id) {
+          setUsersWithNewMessages(prev => new Set(prev).add(msg.from._id));
+          
+          if (currentSelectedUser && msg.from._id === currentSelectedUser._id) {
+            setMessages(prev => {
+              const messageExists = prev.some(existingMsg => existingMsg._id === msg._id);
+              return messageExists ? prev : [...prev, msg];
+            });
+          }
         }
       });
 
@@ -41,6 +85,7 @@ const Chat = () => {
 
       setSocket(newSocket);
       fetchUsers();
+      loadUsersWithNewMessages();
 
       return () => {
         newSocket.disconnect();
@@ -49,6 +94,7 @@ const Chat = () => {
   }, [currentUser, token]);
 
   useEffect(() => {
+    selectedUserRef.current = selectedUser;
     if (selectedUser && token) {
       fetchMessages();
     }
@@ -97,27 +143,126 @@ const Chat = () => {
   };
 
   const sendMessage = async () => {
-    if (!message.trim() || !selectedUser || !currentUser || !socket) return;
+    const messageText = message.trim();
+    
+    if (!messageText || !selectedUser || !currentUser || sending) {
+      return;
+    }
+    
+    setSending(true);
+    setMessage('');
+    setError('');
     
     try {
-      const newMessage = await messagesApi.sendMessage(selectedUser._id, message.trim());
+      const newMessage = await messagesApi.sendMessage(selectedUser._id, messageText);
       
-      // Emit to socket for real-time updates
-      socket.emit('chat message', newMessage);
-      
-      // Add to local state
       setMessages(prev => [...prev, newMessage]);
-      setMessage('');
+      
+      if (socket && socket.connected) {
+        socket.emit('chat message', newMessage);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       setError('Failed to send message');
+      setMessage(messageText);
+    } finally {
+      setSending(false);
     }
   };
 
-  const handleUserSelect = (user: User) => {
-    setSelectedUser(user);
-    setMessages([]);
-    setError('');
+  const handleUserClick = (user: User) => {
+    if (clickTimeout) {
+      // Double click - navigate to profile
+      clearTimeout(clickTimeout);
+      setClickTimeout(null);
+      navigate(`/profile/${user._id}`);
+    } else {
+      // Single click - select user for chat
+      const timeout = setTimeout(() => {
+        setSelectedUser(user);
+        setMessages([]);
+        setError('');
+        setClickTimeout(null);
+        
+        // Remove user from new messages list
+        setUsersWithNewMessages(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(user._id);
+          return newSet;
+        });
+        
+        // Trigger a custom event to update unread counts in sidebar
+        window.dispatchEvent(new CustomEvent('messagesRead'));
+      }, 300);
+      setClickTimeout(timeout);
+    }
+  };
+
+  const handleAvatarClick = (user: User, event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (clickTimeout) {
+      // Double click - navigate to profile
+      clearTimeout(clickTimeout);
+      setClickTimeout(null);
+      navigate(`/profile/${user._id}`);
+    } else {
+      // Single click - select user for chat
+      const timeout = setTimeout(() => {
+        setSelectedUser(user);
+        setMessages([]);
+        setError('');
+        setClickTimeout(null);
+        
+        // Remove user from new messages list
+        setUsersWithNewMessages(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(user._id);
+          return newSet;
+        });
+        
+        // Trigger a custom event to update unread counts in sidebar
+        window.dispatchEvent(new CustomEvent('messagesRead'));
+      }, 300);
+      setClickTimeout(timeout);
+    }
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    setMessage(prev => prev + emoji);
+  };
+
+  const toggleEmojiPicker = () => {
+    setEmojiPickerOpen(!emojiPickerOpen);
+  };
+
+  const loadUsersWithNewMessages = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/messages/users-with-unread', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const userIds = data.userIds || data;
+        setUsersWithNewMessages(new Set(userIds));
+      }
+    } catch (error) {
+      console.error('Error loading users with new messages:', error);
+    }
+  };
+
+  const loadMessagesForUser = async (user: User) => {
+    try {
+      setLoading(true);
+      const response = await messagesApi.getMessages(user._id);
+      setMessages(response);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setError('Failed to load messages');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!currentUser) {
@@ -132,18 +277,27 @@ const Chat = () => {
         {users.map(user => (
           <div 
             key={user._id}
-            className={`chat-user ${selectedUser?._id === user._id ? 'selected' : ''}`}
-            onClick={() => handleUserSelect(user)}
+            className={`chat-user ${selectedUser?._id === user._id ? 'selected' : ''} ${usersWithNewMessages.has(user._id) ? 'has-new-messages' : ''}`}
+            onClick={(e) => handleUserClick(user)}
           >
-            <img
-              src={user.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'}
-              alt="avatar"
-              className="chat-user-avatar"
-            />
+            <div onClick={(e) => handleAvatarClick(user, e)}>
+              <UserAvatar
+                avatarUrl={user.avatarUrl}
+                username={user.username}
+                userId={user._id}
+                size={48}
+                className="chat-user-avatar"
+              />
+            </div>
             <div className="chat-user-info">
-              <div className="chat-user-name">{user.username}</div>
+              <div className="chat-user-name" onClick={() => handleUserClick(user)}>
+                {user.username}
+              </div>
               <div className="chat-user-fullname">{user.fullName}</div>
             </div>
+            {usersWithNewMessages.has(user._id) && (
+              <div className="new-message-indicator"></div>
+            )}
           </div>
         ))}
       </div>
@@ -152,13 +306,19 @@ const Chat = () => {
         <div className="chat-header">
           {selectedUser ? (
             <div className="chat-header-info">
-              <img
-                src={selectedUser.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'}
-                alt="avatar"
-                className="chat-header-avatar"
-              />
+              <div onClick={(e) => handleAvatarClick(selectedUser, e)}>
+                <UserAvatar
+                  avatarUrl={selectedUser.avatarUrl}
+                  username={selectedUser.username}
+                  userId={selectedUser._id}
+                  size={40}
+                  className="chat-header-avatar"
+                />
+              </div>
               <div>
-                <strong>{selectedUser.username}</strong>
+                <div className="chat-header-username" onClick={() => handleUserClick(selectedUser)}>
+                  <strong>{selectedUser.username}</strong>
+                </div>
                 <div className="chat-header-fullname">{selectedUser.fullName}</div>
               </div>
             </div>
@@ -173,28 +333,17 @@ const Chat = () => {
           )}
           {messages.map((msg, index) => {
             const isFromMe = msg.from._id === currentUser._id;
-            const senderAvatar = isFromMe 
-              ? (currentUser.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face')
-              : (selectedUser?.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face');
             
             return (
-              <div
-                key={index}
-                className={`chat-bubble ${isFromMe ? 'me' : 'them'}`}
-              >
-                <img
-                  src={senderAvatar}
-                  alt="avatar"
-                  className="chat-message-avatar"
-                />
-                <div className="chat-bubble-wrapper">
-                  <div className="chat-bubble-content">{msg.text}</div>
-                  <div className="chat-bubble-time">
+              <div key={index} className={`chat-message ${isFromMe ? 'own-message' : 'other-message'}`}>
+                <div className="chat-message-content">
+                  <span className="chat-message-text">{msg.text}</span>
+                  <span className="chat-message-time">
                     {new Date(msg.createdAt).toLocaleTimeString([], { 
                       hour: '2-digit', 
                       minute: '2-digit' 
                     })}
-                  </div>
+                  </span>
                 </div>
               </div>
             );
@@ -209,7 +358,7 @@ const Chat = () => {
             value={message}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setMessage(e.target.value)}
             onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter' && !e.shiftKey && !sending) {
                 e.preventDefault();
                 sendMessage();
               }
@@ -219,13 +368,42 @@ const Chat = () => {
             maxLength={500}
           />
           <button 
+            type="button"
+            className="emoji-button"
+            onClick={toggleEmojiPicker}
+            disabled={!selectedUser}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+              <line x1="9" y1="9" x2="9.01" y2="9"/>
+              <line x1="15" y1="9" x2="15.01" y2="9"/>
+            </svg>
+          </button>
+          <button 
             onClick={sendMessage} 
-            disabled={!selectedUser || !message.trim()}
+            disabled={!selectedUser || !message.trim() || sending}
             className="send-button"
           >
-            Send
+            {sending ? 'Sending...' : 'Send'}
           </button>
         </div>
+        
+        {emojiPickerOpen && (
+          <EmojiPicker
+            isOpen={true}
+            onEmojiSelect={handleEmojiSelect}
+            onClose={() => setEmojiPickerOpen(false)}
+          />
+        )}
       </div>
     </div>
   );

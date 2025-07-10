@@ -5,10 +5,37 @@ import lock from "../../assets/lock.svg";
 
 const ResetPassword = () => {
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Reset link sent to: ${input}`);
+    setLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const response = await fetch("http://localhost:3000/api/password-reset/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ identifier: input }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(data.message);
+      } else {
+        setError(data.message || "Failed to send reset link");
+      }
+    } catch (error) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,10 +56,14 @@ const ResetPassword = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             required
+            disabled={loading}
           />
 
-          <button type="submit" className={styles.resetButton}>
-            Reset your password
+          {error && <div className={styles.error}>{error}</div>}
+          {message && <div className={styles.success}>{message}</div>}
+
+          <button type="submit" className={styles.resetButton} disabled={loading}>
+            {loading ? "Sending..." : "Reset your password"}
           </button>
 
           <div className={styles.resetDivider}>

@@ -1,12 +1,19 @@
 import { useState, useEffect } from 'react';
-import { notificationsApi, Notification } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
+import { notificationsApi, postsApi, Notification } from '../../services/api';
 import useAuthStore from '../../store/authStore';
+import PostModal from '../../components/PostModal';
+import { UserAvatar } from '../../utils/userAvatar';
+import { timeAgo } from '../../utils/timeAgo';
 import styles from './Notifications.module.css';
 
 const Notifications = () => {
   const currentUser = useAuthStore(state => state.user);
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPost, setSelectedPost] = useState<any>(null);
+  const [loadingPost, setLoadingPost] = useState(false);
 
   useEffect(() => {
     loadNotifications();
@@ -36,35 +43,105 @@ const Notifications = () => {
     }
   };
 
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read first
+    if (!notification.read) {
+      await markAsRead(notification._id);
+    }
+
+    // Navigate based on notification type
+    switch (notification.type) {
+      case 'like':
+      case 'comment':
+        if (notification.post?._id) {
+          // Если мобильное устройство, переход на страницу поста
+          if (window.innerWidth <= 768) {
+            navigate(`/post/${notification.post._id}`);
+            return;
+          }
+          setLoadingPost(true);
+          try {
+            // Load full post data
+            const fullPost = await postsApi.getPostById(notification.post._id);
+            setSelectedPost(fullPost);
+          } catch (error) {
+            console.error('Error loading post:', error);
+            // Fallback to basic post data
+            setSelectedPost(notification.post);
+          } finally {
+            setLoadingPost(false);
+          }
+        }
+        break;
+      case 'follow':
+        // Navigate to the follower's profile
+        navigate(`/profile/${notification.from._id}`);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handlePostUpdate = (updatedPost: any) => {
+    setSelectedPost(updatedPost);
+  };
+
+  const handlePostDelete = () => {
+    setSelectedPost(null);
+  };
+
   const getNotificationText = (notification: Notification) => {
     switch (notification.type) {
       case 'like':
-        return 'liked your post';
+        return 'понравился ваш пост';
       case 'comment':
-        return 'commented on your post';
+        return notification.comment?.content 
+          ? `прокомментировал: "${notification.comment.content}"`
+          : 'прокомментировал ваш пост';
       case 'follow':
-        return 'started following you';
+        return 'подписался на вас';
       default:
-        return 'interacted with your content';
+        return 'взаимодействовал с вашим контентом';
+    }
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'like':
+        return '❤️';
+      case 'comment':
+        return '💬';
+      case 'follow':
+        return '👤';
+      default:
+        return '🔔';
     }
   };
 
   if (loading) {
-    return <div className={styles.container}>Loading notifications...</div>;
+    return (
+      <div className={styles.container}>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Загрузка уведомлений...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!currentUser) {
-    return <div className={styles.container}>Please log in to view notifications</div>;
+    return <div className={styles.container}>Войдите в систему для просмотра уведомлений</div>;
   }
 
   return (
     <div className={styles.container}>
-      <h2>Notifications</h2>
+      <h2 className={styles.title}>Уведомления</h2>
       
       {notifications.length === 0 ? (
         <div className={styles.empty}>
-          <p>No notifications yet</p>
-          <p>When someone likes or comments on your posts, you'll see it here.</p>
+          <div className={styles.emptyIcon}>🔔</div>
+          <h3>Пока нет уведомлений</h3>
+          <p>Когда кто-то поставит лайк, прокомментирует или подпишется на вас, вы увидите это здесь.</p>
         </div>
       ) : (
         <div className={styles.notifications}>
@@ -72,22 +149,26 @@ const Notifications = () => {
             <div 
               key={notification._id} 
               className={`${styles.notification} ${!notification.read ? styles.unread : ''}`}
-              onClick={() => !notification.read && markAsRead(notification._id)}
+              onClick={() => handleNotificationClick(notification)}
             >
-              <img 
-                src={notification.from.avatarUrl || 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=150&h=150&fit=crop&crop=face'} 
-                alt="avatar" 
-                className={styles.avatar} 
+              <div className={styles.notificationIcon}>
+                {getNotificationIcon(notification.type)}
+              </div>
+              
+              <UserAvatar
+                avatarUrl={notification.from.avatarUrl}
+                username={notification.from.username}
+                userId={notification.from._id}
+                size={40}
+                className={styles.avatar}
               />
+              
               <div className={styles.content}>
                 <div className={styles.text}>
                   <strong>{notification.from.username}</strong> {getNotificationText(notification)}
-                  {notification.type === 'comment' && notification.comment && (
-                    <span className={styles.commentText}>: "{notification.comment.content}"</span>
-                  )}
                 </div>
                 <div className={styles.time}>
-                  {new Date(notification.createdAt).toLocaleString()}
+                  {timeAgo(notification.createdAt)}
                 </div>
               </div>
               
@@ -105,6 +186,31 @@ const Notifications = () => {
             </div>
           ))}
         </div>
+      )}
+
+      {loadingPost && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingSpinner}>
+            <div className={styles.spinner}></div>
+            <p>Загрузка поста...</p>
+          </div>
+        </div>
+      )}
+
+      {selectedPost && currentUser && (
+        <PostModal
+          post={selectedPost}
+          onClose={() => setSelectedPost(null)}
+          onLike={async () => {
+            // Handle like in modal
+          }}
+          onComment={async (content) => {
+            // Handle comment in modal
+          }}
+          currentUser={currentUser}
+          onPostUpdated={handlePostUpdate}
+          onPostDeleted={handlePostDelete}
+        />
       )}
     </div>
   );

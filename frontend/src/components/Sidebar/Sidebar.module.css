@@ -22,34 +22,47 @@
 }
 
 .logo img {
-  width: 100px;
-  height: 55px;
+  width: 120px;
+  height: 65px;
   object-fit: contain;
 }
 
 .nav {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  flex: 1;
+  gap: 8px;
+  padding: 0;
+}
+
+.desktopNav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.mobileNav {
+  display: none;
 }
 
 .navItem {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px;
+  padding: 12px 16px;
   color: #262626;
   text-decoration: none;
   border-radius: 8px;
   transition: background-color 0.2s ease;
-  font-size: 16px;
-  font-weight: 400;
   background: none;
   border: none;
   cursor: pointer;
   width: 100%;
   text-align: left;
+  font-size: 16px;
+  font-weight: 400;
+  position: relative;
 }
 
 .navItem:hover {
@@ -57,7 +70,33 @@
 }
 
 .navItem.active {
+  background-color: rgba(0, 149, 246, 0.1);
   font-weight: 600;
+}
+
+.navItemWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #0095f6;
+  color: white;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 10;
 }
 
 .icon {
@@ -68,32 +107,57 @@
 
 .navText {
   flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .profileSection {
-  margin-top: 8px;
+  margin-top: auto;
+  padding-top: 20px;
 }
 
-.logoutSection {
-  margin-top: 8px;
-}
-
-.logoutButton {
-  width: 100%;
+.profileItem {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px;
-  background: none;
-  border: none;
+  padding: 12px 16px;
   color: #262626;
   text-decoration: none;
   border-radius: 8px;
   transition: background-color 0.2s ease;
   font-size: 16px;
   font-weight: 400;
+}
+
+.profileItem:hover {
+  background-color: #f5f5f5;
+}
+
+.profileItem.active {
+  background-color: rgba(0, 149, 246, 0.1);
+  font-weight: 600;
+}
+
+.logoutSection {
+  padding-top: 12px;
+}
+
+.logoutButton {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  color: #262626;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
   cursor: pointer;
+  width: 100%;
   text-align: left;
+  font-size: 16px;
+  font-weight: 400;
 }
 
 .logoutButton:hover {
@@ -117,6 +181,14 @@
     width: 60px;
   }
 
+  .desktopNav {
+    flex: 1;
+  }
+
+  .mobileNav {
+    display: none;
+  }
+
   .navItem, .profileItem {
     flex-direction: column;
     gap: 8px;
@@ -128,6 +200,11 @@
   .profileSection {
     margin-top: 16px;
     padding-top: 16px;
+    border-top: 1px solid #dbdbdb;
+  }
+
+  .logoutSection {
+    margin-top: 8px;
   }
 
   .profileAvatar {
@@ -152,83 +229,139 @@
     width: 20px;
     height: 20px;
   }
+
+  .badge {
+    top: 4px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+    padding: 1px 4px;
+  }
 }
 
 /* Mobile Styles */
 @media (max-width: 768px) {
   .sidebar {
-    width: 100%;
-    height: 60px;
-    position: fixed;
-    bottom: 0;
-    top: auto;
-    left: 0;
-    right: 0;
-    border-right: none;
-    border-top: 1px solid #dbdbdb;
-    padding: 0;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-around;
-    background-color: #fff;
-    z-index: 1000;
+    position: fixed !important;
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 60px !important;
+    width: 100% !important;
+    background: white !important;
+    border-top: 1px solid #dbdbdb !important;
+    border-right: none !important;
+    z-index: 1000 !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1) !important;
+    overflow: hidden !important;
   }
 
   .logo {
-    display: none;
+    display: none !important;
   }
 
   .nav {
-    flex: 1;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-    gap: 0;
-    height: 100%;
+    height: 100% !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: row !important;
+    padding: 0 !important;
   }
 
-  .navItem, .profileItem {
-    flex-direction: column;
-    gap: 4px;
-    padding: 8px 4px;
-    text-align: center;
-    min-width: 0;
+  .desktopNav {
+    display: none !important;
+  }
+
+  .mobileNav {
+    display: flex !important;
+    width: 100% !important;
+    justify-content: space-evenly !important;
+    align-items: center !important;
+    height: 100% !important;
+    padding: 0 8px !important;
+    flex-direction: row !important;
+  }
+
+  .navItemWrapper {
+    position: relative;
     flex: 1;
-    height: 100%;
+    display: flex;
     justify-content: center;
-    border-radius: 0;
-    background: none;
-    border: none;
+    align-items: center;
+    max-width: 80px;
   }
 
-  .navText {
-    font-size: 10px;
-    font-weight: 400;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .navItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 2px;
+    gap: 1px;
+    min-width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    position: relative;
+    text-align: center;
+    transition: background-color 0.2s ease;
+  }
+
+  .navItem:hover {
+    background-color: #f5f5f5;
+  }
+
+  .navItem.active {
+    background-color: rgba(0, 149, 246, 0.1);
+  }
+
+  .badge {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    min-width: 14px;
+    height: 14px;
+    font-size: 9px;
+    z-index: 10;
+    border: 1px solid white;
   }
 
   .icon {
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
   }
 
-  .logoutSection {
-    display: none;
-  }
-
-  .profileSection {
-    flex: 1;
-    height: 100%;
-    margin-top: 0;
-    padding-top: 0;
-    border-top: none;
+  .navText {
+    font-size: 9px;
+    line-height: 1;
+    text-align: center;
+    max-width: 100%;
+    white-space: nowrap;
+    font-weight: 400;
   }
 
   .profileAvatar {
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .profileSection,
+  .logoutSection {
+    display: none !important;
+  }
+
+  .dropdownSidebar {
+    display: none !important;
   }
 }
 
@@ -238,16 +371,29 @@
   }
 
   .navItem {
-    padding: 6px 2px;
-  }
-
-  .navText {
-    font-size: 9px;
+    height: 36px;
+    min-width: 36px;
+    padding: 2px 1px;
   }
 
   .icon {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .profileAvatar {
+    width: 16px;
+    height: 16px;
+  }
+
+  .navText {
+    font-size: 8px;
+  }
+
+  .badge {
+    min-width: 12px;
+    height: 12px;
+    font-size: 8px;
   }
 }
 
@@ -321,54 +467,12 @@
   background: #e0e0e0;
 }
 
-.profileItem {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px;
-  color: #262626;
-  text-decoration: none;
-  border-radius: 8px;
-  transition: background-color 0.2s ease;
-  font-size: 16px;
-  font-weight: 400;
-}
-
-.profileItem:hover {
-  background-color: #f5f5f5;
-}
-
-.profileItem.active {
-  font-weight: 600;
-}
-
 .profileAvatar {
   width: 24px;
   height: 24px;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid #dbdbdb;
-}
-
-.navItemWrapper {
-  position: relative;
-}
-
-.badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #ed4956;
-  color: white;
-  border-radius: 10px;
-  padding: 2px 6px;
-  font-size: 12px;
-  font-weight: 600;
-  min-width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* Large Desktop Styles - 1440px+ */
@@ -378,8 +482,8 @@
   }
   
   .logo img {
-    width: 120px;
-    height: 65px;
+    width: 140px;
+    height: 75px;
   }
   
   .navItem, .profileItem, .logoutButton {
@@ -526,5 +630,22 @@
   .dropdownSidebar {
     left: 280px;
     width: 380px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .dropdownSidebar {
+    left: 72px;
+    width: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dropdownSidebar {
+    display: none !important;
+  }
+  
+  .dropdownSidebar.open {
+    display: none !important;
   }
 }
