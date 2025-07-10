@@ -16,7 +16,7 @@ const SearchPanel = ({ isOpen, onClose }: SearchPanelProps) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Load all users once when panel opens
+
   useEffect(() => {
     if (isOpen && allUsers.length === 0) {
       loadAllUsers();
@@ -35,11 +35,11 @@ const SearchPanel = ({ isOpen, onClose }: SearchPanelProps) => {
     }
   };
 
-  // Search users when query changes
+
   useEffect(() => {
     const searchUsers = async () => {
       if (!query.trim()) {
-        setUsers(allUsers.slice(0, 10)); // Show first 10 users when no query
+        setUsers(allUsers.slice(0, 10)); 
         return;
       }
 
@@ -55,7 +55,7 @@ const SearchPanel = ({ isOpen, onClose }: SearchPanelProps) => {
       }
     };
 
-    const timeoutId = setTimeout(searchUsers, 300); // Debounce search
+    const timeoutId = setTimeout(searchUsers, 300); 
     return () => clearTimeout(timeoutId);
   }, [query, allUsers]);
 
