@@ -2,16 +2,15 @@ import { Request, Response } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import passwordResetService from '../services/passwordResetService';
 
-// Ограничение запросов на сброс пароля
+
 export const passwordResetLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 минут
-  max: 3, // максимум 3 запроса на сброс пароля за 15 минут
+  windowMs: 15 * 60 * 1000, 
+  max: 3, 
   message: 'Too many password reset attempts. Please try again in 15 minutes.',
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Запрос на сброс пароля
 export const requestPasswordReset = async (req: Request, res: Response): Promise<void> => {
   try {
     const { identifier } = req.body;
@@ -23,7 +22,7 @@ export const requestPasswordReset = async (req: Request, res: Response): Promise
 
     const result = await passwordResetService.requestPasswordReset(identifier);
     
-    // Всегда возвращаем успешный ответ для безопасности
+
     res.status(200).json(result);
   } catch (error) {
     console.error('Password reset request error:', error);
@@ -31,7 +30,7 @@ export const requestPasswordReset = async (req: Request, res: Response): Promise
   }
 };
 
-// Проверка валидности токена
+
 export const validateResetToken = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token } = req.params;
@@ -50,7 +49,7 @@ export const validateResetToken = async (req: Request, res: Response): Promise<v
   }
 };
 
-// Сброс пароля
+
 export const resetPassword = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token, newPassword } = req.body;
@@ -60,7 +59,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Проверяем длину пароля
+
     if (newPassword.length < 6) {
       res.status(400).json({ message: 'Password must be at least 6 characters long' });
       return;
@@ -79,7 +78,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Очистка истекших токенов (для административных целей)
+
 export const cleanupExpiredTokens = async (req: Request, res: Response): Promise<void> => {
   try {
     const result = await passwordResetService.cleanupExpiredTokens();
