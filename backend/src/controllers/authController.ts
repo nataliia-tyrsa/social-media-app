@@ -13,7 +13,7 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-// Relaxed password validation - only require minimum length
+
 const isValidPassword = (password: string): boolean => {
   return password.length >= 6;
 };
