@@ -39,7 +39,6 @@ const upload = multer({
   }
 });
 
-// Main upload route that matches frontend API call
 router.post("/", protect, upload.single("image"), (req: MulterRequest, res: Response) => {
   console.log('Upload request received:', {
     hasFile: !!req.file,
