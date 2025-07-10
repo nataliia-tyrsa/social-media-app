@@ -26,9 +26,9 @@ export const getNotifications = async (
       .populate("sender", "username avatarUrl fullName")
       .populate("post", "imageUrl content")
       .sort({ createdAt: -1 })
-      .limit(50); // Limit to last 50 notifications
+      .limit(50); 
 
-    // Transform notifications to match frontend interface
+
     const transformedNotifications = notifications.map(notification => ({
       _id: notification._id,
       type: notification.type,
@@ -93,7 +93,7 @@ export const markAsRead = async (
   }
 };
 
-// Helper function to create notifications
+
 export const createNotification = async (
   userId: string | Types.ObjectId,
   senderId: string | Types.ObjectId,
@@ -101,22 +101,20 @@ export const createNotification = async (
   postId?: string | Types.ObjectId
 ): Promise<void> => {
   try {
-    // Don't create notification if user is notifying themselves
     if (userId.toString() === senderId.toString()) {
       return;
     }
 
-    // Check if similar notification already exists (to avoid spam)
     const existingNotification = await Notification.findOne({
       user: userId,
       sender: senderId,
       type,
       post: postId || undefined,
-      createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Last 24 hours
+      createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } 
     });
 
     if (existingNotification) {
-      return; // Don't create duplicate notifications
+      return;
     }
 
     await Notification.create({
