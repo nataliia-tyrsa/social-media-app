@@ -39,7 +39,7 @@ export const likePost = async (
     } else {
       post.likes.push(user._id);
       
-      // Create notification for post author (only when liking, not unliking)
+  
       if (post.author && post.author._id.toString() !== user._id.toString()) {
         await createNotification(
           post.author._id,
