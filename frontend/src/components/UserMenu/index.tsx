@@ -15,7 +15,6 @@ const UserMenu = () => {
   useEffect(() => {
     if (user) {
       loadUnreadCount();
-      // Обновляем счетчик каждые 30 секунд
       const interval = setInterval(loadUnreadCount, 30000);
       return () => clearInterval(interval);
     }
@@ -31,7 +30,7 @@ const UserMenu = () => {
   };
 
   const handleNotificationsClick = () => {
-    setUnreadCount(0); // Сбрасываем счетчик при открытии
+    setUnreadCount(0); 
     navigate('/notifications');
     setIsOpen(false);
   };
