@@ -22,7 +22,7 @@ export const sendMessage = async (
       return;
     }
 
-    // Check if receiver exists
+
     const receiver = await User.findById(to);
     if (!receiver) {
       res.status(404).json({ message: "Receiver not found" });
@@ -38,7 +38,7 @@ export const sendMessage = async (
 
     await message.save();
 
-    // Populate sender info for response
+
     await message.populate("from", "username fullName avatarUrl");
     await message.populate("to", "username fullName avatarUrl");
 
@@ -67,7 +67,7 @@ export const getMessages = async (
       .populate("to", "username fullName avatarUrl")
       .sort({ createdAt: 1 });
 
-    // Mark messages as read
+
     await Message.updateMany(
       { from: userId, to: currentUserId, isRead: false },
       { isRead: true }
