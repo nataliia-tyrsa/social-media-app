@@ -40,7 +40,6 @@ const passwordResetSchema = new Schema<IPasswordReset>({
   }
 });
 
-// Автоматически удаляем истекшие токены
 passwordResetSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 const PasswordReset = mongoose.model<IPasswordReset>("PasswordReset", passwordResetSchema);
