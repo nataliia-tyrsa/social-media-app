@@ -193,12 +193,12 @@ export const deleteTestPosts = async (req: Request, res: Response) => {
   try {
     console.log('Deleting test posts...');
     
-    // Delete posts with picsum.photos images
+
     const result1 = await Post.deleteMany({
       image: { $regex: 'picsum.photos' }
     });
     
-    // Delete posts from jane_doe user
+
     const result2 = await Post.deleteMany({
       'author.username': 'jane_doe'
     });
