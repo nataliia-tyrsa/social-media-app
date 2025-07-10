@@ -14,7 +14,6 @@ class EmailService {
   constructor() {
     this.isDevelopment = process.env.NODE_ENV === 'development';
     
-    // Если в режиме разработки и email не настроен, используем тестовый транспорт
     if (this.isDevelopment && (!process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
       console.log('📧 Email service running in development mode - emails will be logged to console');
       this.transporter = nodemailer.createTransport({
@@ -23,7 +22,6 @@ class EmailService {
         buffer: true
       });
     } else {
-      // Продакшн или настроенный email
       this.transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -45,7 +43,6 @@ class EmailService {
       };
 
       if (this.isDevelopment && (!process.env.EMAIL_USER || !process.env.EMAIL_PASS)) {
-        // В режиме разработки просто логируем email
         console.log('\n📧 ===== EMAIL WOULD BE SENT =====');
         console.log(`To: ${options.to}`);
         console.log(`Subject: ${options.subject}`);
@@ -59,7 +56,7 @@ class EmailService {
     } catch (error) {
       console.error('Error sending email:', error);
       
-      // В режиме разработки не бросаем ошибку
+
       if (this.isDevelopment) {
         console.log('📧 Email sending failed in development mode, but continuing...');
         return;
