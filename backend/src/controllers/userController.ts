@@ -18,7 +18,7 @@ export const updateProfile = async (
       return;
     }
 
-    // Check if username is already taken (if changing username)
+
     if (username && username !== currentUser.username) {
       const existingUser = await User.findOne({ username });
       if (existingUser) {
@@ -28,12 +28,12 @@ export const updateProfile = async (
       currentUser.username = username;
     }
 
-    // Update basic profile fields
+
     if (fullName) currentUser.fullName = fullName;
     if (bio !== undefined) currentUser.bio = bio;
     if (avatarUrl) currentUser.avatarUrl = avatarUrl;
 
-    // Handle password change
+
     if (currentPassword && newPassword) {
       const isCurrentPasswordValid = await bcrypt.compare(currentPassword, currentUser.password);
       if (!isCurrentPasswordValid) {
@@ -52,7 +52,7 @@ export const updateProfile = async (
 
     await currentUser.save();
 
-    // Return user without password
+
     const updatedUser = await User.findById(currentUser._id).select("-password");
     
     res.status(200).json({
@@ -180,7 +180,7 @@ export const toggleFollow = async (
       currentUser.following.push(targetUser._id);
       targetUser.followers.push(currentUser._id);
       
-      // Create notification for the user being followed
+
       await createNotification(
         targetUser._id,
         currentUser._id,
